@@ -1,0 +1,51 @@
+@import url("https://cdn.jsdelivr.net/npm/@osjs/client/dist/main.css");
+@import url("https://cdn.jsdelivr.net/npm/@osjs/gui/dist/main.css");
+@import url("https://cdn.jsdelivr.net/npm/@osjs/dialogs/dist/main.css");
+@import url("https://cdn.jsdelivr.net/npm/@osjs/panels/dist/main.css");
+@import url("https://cdn.jsdelivr.net/npm/@osjs/standard-theme/dist/main.css");
+
+.osjs-panel img,
+.osjs-window-top img {
+  display: none;
+}
+
+.lds-dual-ring {
+  /* change color here */
+  color: #000000;
+  width: 100px;
+  height: 100px;
+  position: absolute;
+  top:0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+}
+.lds-dual-ring,
+.lds-dual-ring:after {
+  box-sizing: border-box;
+}
+.lds-dual-ring {
+  display: inline-block;
+  width: 80px;
+  height: 80px;
+}
+.lds-dual-ring:after {
+  content: " ";
+  display: block;
+  width: 64px;
+  height: 64px;
+  margin: 8px;
+  border-radius: 50%;
+  border: 6.4px solid currentColor;
+  border-color: currentColor transparent currentColor transparent;
+  animation: lds-dual-ring 1.2s linear infinite;
+}
+@keyframes lds-dual-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
