@@ -1,6 +1,5 @@
 console.log("Initialising")
 
-import { h, text, app } from "https://unpkg.com/hyperapp"
 /* import * as Preact from 'https://esm.sh/preact'
 import { signal } from 'https://esm.sh/@preact/signals'
 import htm from 'https://esm.sh/htm'
@@ -8,7 +7,6 @@ const html = htm.bind(Preact.h)
 import "https://cdn.plot.ly/plotly-2.27.0.min.js";
 */
 import "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js";
-
 import "https://cdn.jsdelivr.net/npm/@osjs/gui/dist/main.js";
 import "https://cdn.jsdelivr.net/npm/@osjs/client/dist/main.js";
 import "https://cdn.jsdelivr.net/npm/@osjs/panels/dist/main.js";
@@ -24,12 +22,11 @@ const {
   VFSServiceProvider,
   NotificationServiceProvider,
   SettingsServiceProvider,
-  AuthServiceProvider } =
-osjsClient;
-
+  AuthServiceProvider } = osjsClient;
 const { GUIServiceProvider } = osjsGui;
 const { PanelServiceProvider } = osjsPanels;
 const { DialogServiceProvider } = osjsDialogs;
+const { h, text, app } = hyperapp;
 
 const config = {
   standalone: true,
@@ -56,12 +53,8 @@ const config = {
 };
 
 const onStarted = core => {
-/*
-  window.pyodide.runPython(`
-    #from pyodide.ffi import to_js
-    #from js import window, Object
-    #window_data = to_js({'title':'Example', 'dimension': {'width': 400, 'height':200}, 'position':'center'}, dict_converter=Object.fromEntries)
-    #window.osjs.make("osjs/window", window_data).render()
+  const exm = window.pyodide.runPython(`
+    # Simple tutorial example
     from qtpy.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout
     app = QApplication([])
     window = QWidget()
@@ -72,54 +65,16 @@ const onStarted = core => {
     window.show()
     app.exec()
   `);
-*/
-// /*
-  const createView = (state, actions) => {
-    console.log('inCreateView');
-    console.log(state);
-    return h('div', {}, [
-    h('div', {}, String(state.counter)),
-    h('button', {type: 'button', onclick: () => actions.increment()}, 'Increment counter')
-  ]);
-  };
-  const createApp = (content) => {
-    console.log('inCreateApp');
-    console.log(content);
-    //app({init:{counter:0}, view:createView, node:content});
-    app({
-      counter: 0
-    }, {
-      increment: () => state => ({counter: state.counter + 1})
-    }, createView, content);
-  };
-  //const proc = core.make('osjs/application');
-  //const win = proc.createWindow({title:'Exm', dimension:{width:300, heigh:300}}).render((content, win) => createApp(content));
-  //const win = core.make('osjs/window', {title:'Exm', dimension:{width:300, heigh:300}}).render((content, win) => createApp(content));
-  //core.make("osjs/window", { title: "UMD Example", dimension: { width: 200, height: 200 }, position: "center" }).render();
   const pkg = core.make('osjs/packages');
   pkg.addPackages([ {
     "name": "Exm",
     "category": "utilities",
     "title": { "en_EN": "Exm" },
-    "description": { "en_EN": "File Manager" }
+    "description": { "en_EN": "Example Python App" }
   } ]);
-  pkg.register("Exm", (core, args, options, metadata) => {
-    const proc = core.make('osjs/application', {args, options, metadata});
-    proc.createWindow({title:'Exm', dimension:{width:300, heigh:300}}).render((content, win) => createApp(content));
-    return proc;
-  });
-  console.log(pkg);
+  pkg.register("Exm", exm);
   console.log(pkg.getPackages());
   pkg.launch('Exm');
-  pkg.launch('FileManager');
-  
-// */
-  //console.log(core);
-  //const pkg = core.make('osjs/packages');
-  //console.log(pkg);
-  //console.log(pkg.getPackages());
-  //console.log(pkg.packages);
-  //console.log(pkg.metadata);
 };
 
 const init_osjs = () => {
@@ -149,6 +104,7 @@ const init_osjs = () => {
   osjs.boot();
 };
 
+//window.addEventListener('DOMContentLoaded', () => init_osjs());
 async function init_python() {
   // Registers OS.js modules to be able to access them from Python
   window.pyodide.registerJsModule("osjsGui", osjsGui);
@@ -171,6 +127,7 @@ async function init_python() {
 // need the Emscripten FS to be already initialised before osjs-VFS.
 const pyodide = loadPyodide()
   .then((out) => {
+    out.setDebug(true);
     document.getElementById("loading_spinner").remove();
     window.pyodide = out; 
     init_python();

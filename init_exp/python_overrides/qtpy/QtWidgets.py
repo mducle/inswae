@@ -1,18 +1,29 @@
 import js
-from pyodide.ffi import to_js
-from js import Object, window, osjsGui
+import osjsGui
+from pyodide.ffi import to_js, create_proxy
+from js import Object, window
 from hyperapp import h, text, app
 
 QAPP = None
 
+def toObj(in_dict):
+    return to_js(in_dict, dict_converter=Object.fromEntries)
+
 class QApplication():
     def __init__(self, args):
-        self.proc = window.osjs.make('osjs/application')
+        self.window = None
         global QAPP
-        QAPP = self.proc
+        QAPP = self
+    def set_window(self, window):
+        self.window = window
     def exec(self):
         global QAPP
         QAPP = None
+        if self.window is not None:
+            def callback(core, args, options, metadata):
+                proc = window.osjs.make('osjs/application', toObj({'args':args, 'options':options, 'metadata':metadata}))
+                proc.createWindow(toObj({'title': self.window._title})).render(self.window._layout)
+            return callback
 
 class QLayout():
     def __init__(self, parent=None):
@@ -55,14 +66,10 @@ class QBoxLayout(QLayout):
     @Direction.setter
     def Direction(self, value):
         self._direction = value
-    def __call__(self, value, val):
-        js.console.log(value)
-        js.console.log(val)
+    def __call__(self, content, win):
         def createView(state, actions):
-            vv = [obj.h() for obj in self._widgets]
-            js.console.log(vv)
-            return vv
-        return app(Object(), Object(), createView, val)
+            return h('div', Object(), to_js([obj.h() for obj in self._widgets]))
+        return app(Object(), Object(), create_proxy(createView), content)
         
 class QHBoxLayout(QBoxLayout):
     def __init__(self, parent=None):
@@ -76,15 +83,13 @@ class QVBoxLayout(QBoxLayout):
 
 class DummyProc():
     def createWindow(self, window_data):
-        return osjs.make('osjs/window', window_data)
+        return window.osjs.make('osjs/window', window_data)
 
 class QWidget():
     def __init__(self, parent=None):
-        global QAPP
         self.parent = parent
         self._title = ''
         self._flags = None
-        self.proc = QAPP if QAPP else DummyProc()
     def setWindowFlags(self, flags):
         self._flags = flags
     def setWindowTitle(self, title):
@@ -93,12 +98,14 @@ class QWidget():
         self._layout = layout
     def show(self):
         if self.parent == None:   # Is an independent window
-            window_data = to_js({'title': self._title}, dict_converter=Object.fromEntries)
-            self.proc.createWindow(window_data).render(self._layout)
+            if QAPP is None:
+                window_data = toObj({'title': self._title})
+                window.osjs.make('osjs/window', window_data).render(self._layout)
+            else:
+                QAPP.set_window(self)
         else:
             self.parent.show()
  
-
 class QFrame(QWidget):
     def __init__(self, parent=None, flags=None):
         pass
@@ -108,4 +115,4 @@ class QPushButton(QWidget):
         self.parent = parent
         self.text = text
     def h(self):
-        return h(osjsGui.Button, to_js({'label': self.text}, dict_converter=Object.fromEntries))
+        return h(osjsGui.Button, toObj({'label': self.text}))
