@@ -1,10 +1,10 @@
 console.log("Initialising")
 
+import { h, text, app } from "https://unpkg.com/hyperapp"
 /* import * as Preact from 'https://esm.sh/preact'
 import { signal } from 'https://esm.sh/@preact/signals'
 import htm from 'https://esm.sh/htm'
 const html = htm.bind(Preact.h)
-
 import "https://cdn.plot.ly/plotly-2.27.0.min.js";
 */
 import "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js";
@@ -53,54 +53,73 @@ const config = {
       {name: "home", label: "Home", adapter: "emscripten", icon: {name: "user-home"} }
     ]
   }
-/*desktop: {
-    iconview: {
-      enabled: false },
-    contextmenu: {
-      enabled: false },
-    settings: {
-      font: "sans-serif",
-      sounds: false,
-      panels: [{
-        position: "top",
-        items: [
-        { name: "windows" },
-        { name: "tray" },
-        { name: "clock" }] }] 
-    } 
-  }*/
 };
 
 const onStarted = core => {
-  // Basic window example
-  core.make("osjs/window", {
-    title: "UMD Example",
-    dimension: { width: 400, height: 200 },
-    position: "center" }).
-  render($content => {
-    $content.appendChild(
-    document.createTextNode(
-    "Hello World!"));
+/*
+  window.pyodide.runPython(`
+    #from pyodide.ffi import to_js
+    #from js import window, Object
+    #window_data = to_js({'title':'Example', 'dimension': {'width': 400, 'height':200}, 'position':'center'}, dict_converter=Object.fromEntries)
+    #window.osjs.make("osjs/window", window_data).render()
+    from qtpy.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout
+    app = QApplication([])
+    window = QWidget()
+    layout = QVBoxLayout()
+    layout.addWidget(QPushButton('Top'))
+    layout.addWidget(QPushButton('Bottom'))
+    window.setLayout(layout)
+    window.show()
+    app.exec()
+  `);
+*/
+// /*
+  const createView = (state, actions) => {
+    console.log('inCreateView');
+    console.log(state);
+    return h('div', {}, [
+    h('div', {}, String(state.counter)),
+    h('button', {type: 'button', onclick: () => actions.increment()}, 'Increment counter')
+  ]);
+  };
+  const createApp = (content) => {
+    console.log('inCreateApp');
+    console.log(content);
+    //app({init:{counter:0}, view:createView, node:content});
+    app({
+      counter: 0
+    }, {
+      increment: () => state => ({counter: state.counter + 1})
+    }, createView, content);
+  };
+  //const proc = core.make('osjs/application');
+  //const win = proc.createWindow({title:'Exm', dimension:{width:300, heigh:300}}).render((content, win) => createApp(content));
+  //const win = core.make('osjs/window', {title:'Exm', dimension:{width:300, heigh:300}}).render((content, win) => createApp(content));
+  //core.make("osjs/window", { title: "UMD Example", dimension: { width: 200, height: 200 }, position: "center" }).render();
+  const pkg = core.make('osjs/packages');
+  pkg.addPackages([ {
+    "name": "Exm",
+    "category": "utilities",
+    "title": { "en_EN": "Exm" },
+    "description": { "en_EN": "File Manager" }
+  } ]);
+  pkg.register("Exm", (core, args, options, metadata) => {
+    const proc = core.make('osjs/application', {args, options, metadata});
+    proc.createWindow({title:'Exm', dimension:{width:300, heigh:300}}).render((content, win) => createApp(content));
+    return proc;
   });
-  /*
-  core.make("osjs/packages").launch("Calculator").then(result => {
-    console.log(result)
-    if (result.errors.length) {
-      logger.error(result.errors); }
-    return result;});
-  */
-  const fs = core.make('osjs/fs');
-  console.log(fs);
-  console.log(fs.mountpoints());
-  const vfs = core.make('osjs/vfs');
-  console.log(vfs);
-  vfs.readdir('osjs:/').then( (list) => {
-    console.log(list);
-  });
-  //console.log(vfs.readfile('osjs:/lib/python3.11/site-packages/numpy-1.25.2.dist-info/top_level.txt', 'string'));
-  //console.log(vfs.writefile('osjs:/home/test.txt', 'this is a text'));
-  //console.log(vfs.url('osjs:/home/test.txt'));
-  console.log(core.configuration);
+  console.log(pkg);
+  console.log(pkg.getPackages());
+  pkg.launch('Exm');
+  pkg.launch('FileManager');
+  
+// */
+  //console.log(core);
+  //const pkg = core.make('osjs/packages');
+  //console.log(pkg);
+  //console.log(pkg.getPackages());
+  //console.log(pkg.packages);
+  //console.log(pkg.metadata);
 };
 
 const init_osjs = () => {
@@ -130,21 +149,31 @@ const init_osjs = () => {
   osjs.boot();
 };
 
-async function init_pyodide() {
-  // Loads Pyodide async whilst setting up OS.JS
-  for (const pkg of ["numpy", "pyyaml"]) {
-    await window.pyodide.loadPackage(pkg);
+async function init_python() {
+  // Registers OS.js modules to be able to access them from Python
+  window.pyodide.registerJsModule("osjsGui", osjsGui);
+  window.pyodide.registerJsModule("osjsPanels", osjsPanels);
+  window.pyodide.registerJsModule("osjsDialogs", osjsDialogs);
+  window.pyodide.registerJsModule("hyperapp", {h:h, text:text, app:app});
+  // Copies files in the overrides folder to Python site-packages folder
+  fetch("./python-overrides.tgz").then( (response) => {
+    response.arrayBuffer().then( (value) => {
+      window.pyodide.unpackArchive(value, "gztar", {extractDir: "/lib/python3.11/site-packages/"});
+    });
+  });
+  // Loads Python wheels
+  for (const pkg of ["numpy"]) {//, "scipy", "matplotlib"]) {
+    window.pyodide.loadPackage(pkg);
   }
-  console.log("Imported Numpy and PyYaml")
 };
 
-//window.addEventListener("DOMContentLoaded", () => init_osjs());
+// We need Pyodide to be loaded first before initialising OS.js as we
+// need the Emscripten FS to be already initialised before osjs-VFS.
 const pyodide = loadPyodide()
   .then((out) => {
-    const load_spinner = document.getElementById("loading_spinner");
-    load_spinner.remove();
+    document.getElementById("loading_spinner").remove();
     window.pyodide = out; 
-    init_pyodide();
+    init_python();
     init_osjs();
   }
 );

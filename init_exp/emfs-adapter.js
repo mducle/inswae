@@ -15,7 +15,14 @@ const mimedict = {
   py: "text/x-python"
 }
 
-const stripPrefix = path => path.split(":").splice(1).join("");
+function stripPrefix(path) {
+  if (path.startsWith('home:/')) {
+    return '/home/pyodide/' + path.substring(6, path.length);
+  } else {
+    return path.split(":").splice(1).join("");
+  }
+}
+
 function stp(path) {
   if (typeof path === 'string' || path instanceof String) {
     return stripPrefix(path);
