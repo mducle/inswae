@@ -4,9 +4,9 @@ module.exports = {
   files: [
     "*.htm*", "*.css", "*.js",
     {
-      match: ["python_overrides/**/*.py"],
+      match: ["py_src/**/*.py"],
       fn: (event, file) => {
-        targz.compress({src:"python_overrides", dest:"python-overrides.tgz"});
+        targz.compress({src:"py_src", dest:"python-overrides.tgz"});
       }
     }
   ]

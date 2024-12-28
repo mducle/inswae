@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "prestart": "targz py_src python-overrides.tgz",
+    "start": "browser-sync start --server . --files src/ --files py_src/ --single --config ./bs-config.js"
+  },
+  "dependencies": {
+    "browser-sync": "^3.0.3",
+    "targz": "1.0.1"
+  }
+}
