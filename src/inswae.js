@@ -55,12 +55,20 @@ const config = {
 const onStarted = core => {
   const exm = window.pyodide.runPython(`
     # Simple tutorial example
-    from qtpy.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout
+    from qtpy.QtWidgets import *
     app = QApplication([])
     window = QWidget()
-    layout = QVBoxLayout()
-    layout.addWidget(QPushButton('Top'))
-    layout.addWidget(QPushButton('Bottom'))
+    layout = QGridLayout()
+    label = QLabel('0')
+    def addone(event):
+      label.setText(f'{int(label.text)+1}')
+    plusbtn = QPushButton('+')
+    plusbtn.clicked.connect(addone)
+    minusbtn = QPushButton('-')
+    minusbtn.clicked.connect(lambda ev: label.setText(f'{int(label.text)-1}'))
+    layout.addWidget(label, 0, 0)
+    layout.addWidget(plusbtn, 1, 0)
+    layout.addWidget(minusbtn, 0, 1)
     window.setLayout(layout)
     window.show()
     app.exec()
