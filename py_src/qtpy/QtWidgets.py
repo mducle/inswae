@@ -36,7 +36,10 @@ class QApplication():
         if self.window is not None:
             def callback(core, args, options, metadata):
                 proc = window.osjs.make('osjs/application', toObj({'args':args, 'options':options, 'metadata':metadata}))
-                proc.createWindow(toObj({'title': self.window._title, 'dimension':{'width':500, 'height':300}})).render(self.window._layout)
+                def createApp(content, win):
+                    renderfn = create_proxy(self.window._layout.render_function)
+                    return app(toObj({'stateid':0}), toObj({'change':create_proxy(state_change)}), renderfn, content)
+                proc.createWindow(toObj({'title': self.window._title, 'dimension':{'width':500, 'height':300}})).render(createApp)
             return callback
 
 def action_wrap(state, actions, call):
@@ -54,27 +57,10 @@ class QLayout():
     def __init__(self, parent=None):
         self.parent = parent
         self._widgets = []
-        self._views = []
+        self._styles = {}
     def addWidget(self, widget):
         self._widgets.append(widget) 
         widget.parent = self
-    def __call__(self, content, win):
-        def createView(state, actions):
-            widgets = self.widgets
-            if not isinstance(widgets[0], list) or len(widgets[0]) == 1:
-                rendered = [obj.h(state, actions) for obj in self._widgets if hasattr(obj, 'h') and obj.isVisible()]
-                return h(osjsGui.Box, toObj({'orientation':'horizontal'}), to_js(rendered))
-            else:
-                objs_list = []
-                for r in range(len(widgets)):
-                    rendered = [obj.h(state, actions) for obj in widgets[r] if hasattr(obj, 'h') and obj.isVisible()]
-                    objs_list.append(h(osjsGui.Box, toObj({'orientation':'vertical'}), to_js(rendered)))
-                return h(osjsGui.Box, toObj({'orientation':'horizontal'}), objs_list)
-        self._views.append(create_proxy(createView))
-        return app(toObj({'stateid':0}), toObj({'change':create_proxy(state_change)}), self._views[-1], content)
-    def __del__(self):
-        for v in self._views:
-            del v
 
 class QGridLayout(QLayout):
     def __init__(self, parent=None):
@@ -82,38 +68,30 @@ class QGridLayout(QLayout):
     def addWidget(self, widget, row, column, rowSpan=None, columnSpan=None, alignment=Qt.AlignCenter):
         self._widgets.append([widget, row, column, rowSpan, columnSpan])
         widget.parent = self
-    def __call__(self, content, win):
+    @property
+    def render_function(self):
         def createGrid(state, actions):
             nr = max([w[1] for w in self._widgets]) + 1
             nc = max([w[2] for w in self._widgets]) + 1
             gridcss = toObj({'display':'grid', 'grid-gap':'5px', 
                              'grid-template-columns':f'repeat({nc}, 1fr)', 'grid-template-rows':f'repeat({nr}, 1fr'})
             objs_list = []
-            for w in self._widgets:
+            for w in [obj for obj in self._widgets if obj[0].isVisible()]:
                 rowspec = f'{w[1]+1}' if w[3] is None else f'{w[1]+1} / span {w[3]}'
                 colspec = f'{w[2]+1}' if w[4] is None else f'{w[2]+1} / span {w[4]}'
                 objs_list.append(h('div', toObj({'style':toObj({'grid-column':colspec, 'grid-row':rowspec})}), w[0].h(state, actions)))
-            return h('div', toObj({'style':gridcss}), objs_list)
-        self._views.append(create_proxy(createGrid))
-        return app(toObj({'stateid':0}), toObj({'change':create_proxy(state_change)}), self._views[-1], content)
+            return h('div', toObj({'style':gridcss, **self._styles}), objs_list)
+        return createGrid
 
 class QFormLayout(QLayout):
     def __init__(self, parent=None):
         raise NotImplementedError
 
 class MetaQBox(type):
-    @property
-    def LeftToRight(self):
-        return 1
-    @property
-    def RightToLeft(self):
-        return 2
-    @property
-    def TopToBottom(self):
-        return 3
-    @property
-    def BottomToTop(self):
-        return 4
+    LeftToRight = property(lambda self: 'row')
+    RightToLeft = property(lambda self: 'row-reverse')
+    TopToBottom = property(lambda self: 'column')
+    BottomToTop = property(lambda self: 'column-reverse')
     
 class QBoxLayout(QLayout, metaclass=MetaQBox):
     def __init__(self, parent=None):
@@ -126,15 +104,13 @@ class QBoxLayout(QLayout, metaclass=MetaQBox):
     def Direction(self, value):
         self._direction = value
     @property
-    def widgets(self):
-        if self.Direction == QBoxLayout.TopToBottom:
-            return self._widgets
-        elif self.Direction == QBoxLayout.BottomToTop:
-            return list(reversed(self._widgets))
-        elif self.Direction == QBoxLayout.LeftToRight:
-            return [self._widgets]
-        elif self.Direction == QBoxLayout.RightToLeft:
-            return [list(reversed(self._widgets))]
+    def render_function(self):
+        def createView(state, actions):
+            rendered = []
+            for obj in [w for w in self._widgets if w.isVisible()]:
+                rendered.append(h('div', toObj({'style':toObj({'flex':'1'})}), obj.h(state, actions)))
+            return h('div', toObj({'style': toObj({'display':'flex', 'flex-direction':self.Direction, **self._styles})}), to_js(rendered))
+        return createView
         
 class QHBoxLayout(QBoxLayout):
     def __init__(self, parent=None):
@@ -146,6 +122,17 @@ class QVBoxLayout(QBoxLayout):
         super(QVBoxLayout, self).__init__(parent)
         self.Direction = QBoxLayout.TopToBottom
 
+class MetaQFrame(type):
+    Plain = property(lambda self: 1)
+    Raised = property(lambda self: 2)
+    Sunken = property(lambda self: 4)
+    NoFrame = property(lambda self: 8)
+    Box = property(lambda self: 16)
+    Panel = property(lambda self: 16)
+    StyledPanel = property(lambda self: 16)
+    HLine = property(lambda self: 32)
+    VLine = property(lambda self: 64)
+
 class QWidget():
     def __init__(self, parent=None):
         self.parent = parent
@@ -155,6 +142,8 @@ class QWidget():
         self._hidden = False
         self._layout = None
         self._props = {}
+        self._style = {}
+        self._framestyle = {}
         self._actions = {}
     def setWindowFlags(self, flags):
         self._flags = flags
@@ -166,14 +155,17 @@ class QWidget():
         if self.parent == None:   # Is an independent window
             if self._layout is None:
                 raise RuntimeError('Custom top level widget has no layout')
+            self._layout._styles = {**self._style, **self._framestyle}
             if QAPP is None:
                 window_data = toObj({'title': self._title})
-                window.osjs.make('osjs/window', window_data).render(self._layout)
+                def createApp(content, win):
+                    renderfn = create_proxy(self.window._layout.render_function)
+                    return app(toObj({'stateid':0}), toObj({'change':create_proxy(state_change)}), renderfn, content)
+                window.osjs.make('osjs/window', window_data).render(createApp)
             else:
                 QAPP.set_window(self)
         else:
             self._hidden = False
-            #self.parent.show()
     def text(self):
         return self._text
     def setText(self, text):
@@ -182,27 +174,50 @@ class QWidget():
         self._hidden = True
     def isVisible(self):
         return not self._hidden
+    def setFrameStyle(self, style):
+        if (style | QFrame.NoFrame) == style:
+            self._framestyle = {}
+        elif (style | QFrame.HLine) == style:
+            self._framestyle = {'border-style':{33:'solid', 34:'outset', 36:'inset'}[style]+' none none none'}
+        elif (style | QFrame.VLine) == style:
+            self._framestyle = {'border-style':'none '+{64:'solid', 66:'outset', 68:'inset'}[style]+' none none'}
+        else:
+            self._framestyle = {'border-style':{17:'solid', 18:'outset', 20:'inset'}[style]}
+    def setLineWidth(self, linewidth):
+        self._framestyle.update({'border-width':f'{linewidth}px'})
     @property
     def content(self):
         return []
     def h(self, state, actions):
-        props = {k:getattr(self, v) for k, v in self._props.items()}
-        for k, v in self._actions.items():
-            props[k] = create_proxy(action_wrap(state, actions, v))
-        js.console.log(toObj(props))
-        return h(self._element, toObj(props), self.content)
+        style = {**self._style, **self._framestyle}
+        if self._layout is None:
+            props = {k:getattr(self, v) for k, v in self._props.items()}
+            if style:
+                props['style'] = toObj(style)
+            for k, v in self._actions.items():
+                props[k] = create_proxy(action_wrap(state, actions, v))
+            return h(self._element, toObj(props), self.content)
+        else:
+            if style:
+                self._layout._styles = style
+            return self._layout.render_function(state, actions)
  
-class QFrame(QWidget):
+class QFrame(QWidget, metaclass=MetaQFrame):
     def __init__(self, parent=None, flags=None):
-        raise NotImplementedError
+        super(QFrame, self).__init__(parent)
+        self._element = 'div'
 
 class QPushButton(QWidget):
     def __init__(self, text, parent=None):
         super(QPushButton, self).__init__(parent)
         self._text = text
         self._element = osjsGui.Button
-        self._clicked = EventProxy(self, 'onclick')
+        self._clicked = EventProxy(self, 'onclick', self._clickedWrapper)
         self._props = {'label':'_text'}
+    def _clickedWrapper(self, fn):
+        def clickWrap(event):
+            fn()
+        return clickWrap
     @property
     def clicked(self):
         return self._clicked
