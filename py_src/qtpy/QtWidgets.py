@@ -3,20 +3,25 @@ import osjsGui
 from pyodide.ffi import to_js, create_proxy
 from js import Object, window
 from hyperapp import h, text, app
-import inspect
+import jswidgets
+from .QtCore import Qt
 
 QAPP = None
-CALLBACK_TEST = False
 
 def toObj(in_dict):
     return to_js(in_dict, dict_converter=Object.fromEntries)
 
 class EventProxy():
-    def __init__(self, parent, name):
+    def __init__(self, parent, name, wrapper=None):
         self.parent = parent
         self.name = name
+        self.wrapper = wrapper
     def connect(self, callback):
-        self.parent._actions[self.name] = callback
+        # Creates a wrapped callback
+        if self.wrapper is None:
+            self.parent._actions[self.name] = callback
+        else:
+            self.parent._actions[self.name] = self.wrapper(callback)
 
 class QApplication():
     def __init__(self, args):
@@ -33,34 +38,8 @@ class QApplication():
                 proc = window.osjs.make('osjs/application', toObj({'args':args, 'options':options, 'metadata':metadata}))
                 proc.createWindow(toObj({'title': self.window._title, 'dimension':{'width':500, 'height':300}})).render(self.window._layout)
             return callback
-        """
-        def createView(state, actions):
-            def increment(event):
-                print('inIncrement')
-                js.console.log(event)
-                actions.increment()
-            return h('div', Object(), toObj([h('div', Object(), str(state.counter)), h('button', toObj({'type':'button', 'onclick': create_proxy(increment)}), 'Increment')]))
-        def incstate(event):
-            print('inIncstate')
-            js.console.log(event)
-            def inner(state, actions):
-                print('inInner')
-                js.console.log(actions)
-                js.console.log(state)
-                return toObj({'counter':state.counter+1})
-            return create_proxy(inner)
-        def createApp(content, win):
-            print('inCreateApp')
-            return app(toObj({'counter':0}), toObj({'increment':create_proxy(incstate)}), create_proxy(createView), content)
-        def callback(core, args, options, metadata):
-            print('inCallback')
-            proc = window.osjs.make('osjs/application', toObj({'args':args, 'options':options, 'metadata':metadata}))
-            proc.createWindow(toObj({'title': 'Example', 'dimension':{'width':500, 'height':300}})).render(createApp)
-        return create_proxy(callback)
-        """
 
-
-def awrap(state, actions, call):
+def action_wrap(state, actions, call):
     def wrapper(*args, **kwargs):
         actions.change(state)
         call(*args, **kwargs)
@@ -83,11 +62,13 @@ class QLayout():
         def createView(state, actions):
             widgets = self.widgets
             if not isinstance(widgets[0], list) or len(widgets[0]) == 1:
-                return h(osjsGui.Box, toObj({'orientation':'horizontal'}), to_js([obj.h(state, actions) for obj in self._widgets if hasattr(obj, 'h')]))
+                rendered = [obj.h(state, actions) for obj in self._widgets if hasattr(obj, 'h') and obj.isVisible()]
+                return h(osjsGui.Box, toObj({'orientation':'horizontal'}), to_js(rendered))
             else:
                 objs_list = []
                 for r in range(len(widgets)):
-                    objs_list.append(h(osjsGui.Box, toObj({'orientation':'vertical'}), to_js([obj.h(state, actions) for obj in widgets[r] if hasattr(obj, 'h')])))
+                    rendered = [obj.h(state, actions) for obj in widgets[r] if hasattr(obj, 'h') and obj.isVisible()]
+                    objs_list.append(h(osjsGui.Box, toObj({'orientation':'vertical'}), to_js(rendered)))
                 return h(osjsGui.Box, toObj({'orientation':'horizontal'}), objs_list)
         self._views.append(create_proxy(createView))
         return app(toObj({'stateid':0}), toObj({'change':create_proxy(state_change)}), self._views[-1], content)
@@ -98,19 +79,23 @@ class QLayout():
 class QGridLayout(QLayout):
     def __init__(self, parent=None):
         super(QGridLayout, self).__init__(parent)
-        self._widgets = [[ [] ]]
-    def addWidget(self, widget, row, column, rowSpan=None, columnSpan=None, alignment=0):
-        if row >= len(self._widgets):
-            self._widgets += [[[]]*len(self._widgets[0]) for i in range(row + 1 - len(self._widgets))]
-        if column >= len(self._widgets[0]):
-            ndif = column + 1 - len(self._widgets[0])
-            for r in range(len(self._widgets)):
-                self._widgets[r] += [[]]*ndif
-        self._widgets[row][column] = widget
+    def addWidget(self, widget, row, column, rowSpan=None, columnSpan=None, alignment=Qt.AlignCenter):
+        self._widgets.append([widget, row, column, rowSpan, columnSpan])
         widget.parent = self
-    @property
-    def widgets(self):
-        return self._widgets
+    def __call__(self, content, win):
+        def createGrid(state, actions):
+            nr = max([w[1] for w in self._widgets]) + 1
+            nc = max([w[2] for w in self._widgets]) + 1
+            gridcss = toObj({'display':'grid', 'grid-gap':'5px', 
+                             'grid-template-columns':f'repeat({nc}, 1fr)', 'grid-template-rows':f'repeat({nr}, 1fr'})
+            objs_list = []
+            for w in self._widgets:
+                rowspec = f'{w[1]+1}' if w[3] is None else f'{w[1]+1} / span {w[3]}'
+                colspec = f'{w[2]+1}' if w[4] is None else f'{w[2]+1} / span {w[4]}'
+                objs_list.append(h('div', toObj({'style':toObj({'grid-column':colspec, 'grid-row':rowspec})}), w[0].h(state, actions)))
+            return h('div', toObj({'style':gridcss}), objs_list)
+        self._views.append(create_proxy(createGrid))
+        return app(toObj({'stateid':0}), toObj({'change':create_proxy(state_change)}), self._views[-1], content)
 
 class QFormLayout(QLayout):
     def __init__(self, parent=None):
@@ -165,9 +150,11 @@ class QWidget():
     def __init__(self, parent=None):
         self.parent = parent
         self._title = ''
+        self._text = ''
         self._flags = None
         self._hidden = False
         self._layout = None
+        self._props = {}
         self._actions = {}
     def setWindowFlags(self, flags):
         self._flags = flags
@@ -187,10 +174,23 @@ class QWidget():
         else:
             self._hidden = False
             #self.parent.show()
+    def text(self):
+        return self._text
+    def setText(self, text):
+        self._text = text
     def hide(self):
         self._hidden = True
     def isVisible(self):
         return not self._hidden
+    @property
+    def content(self):
+        return []
+    def h(self, state, actions):
+        props = {k:getattr(self, v) for k, v in self._props.items()}
+        for k, v in self._actions.items():
+            props[k] = create_proxy(action_wrap(state, actions, v))
+        js.console.log(toObj(props))
+        return h(self._element, toObj(props), self.content)
  
 class QFrame(QWidget):
     def __init__(self, parent=None, flags=None):
@@ -199,39 +199,37 @@ class QFrame(QWidget):
 class QPushButton(QWidget):
     def __init__(self, text, parent=None):
         super(QPushButton, self).__init__(parent)
-        self.text = text
-        self._clicked = EventProxy(self, 'clicked')
+        self._text = text
+        self._element = osjsGui.Button
+        self._clicked = EventProxy(self, 'onclick')
+        self._props = {'label':'_text'}
     @property
     def clicked(self):
         return self._clicked
-    def h(self, state, actions):
-        props = {'label': self.text}
-        if 'clicked' in self._actions:
-            props['onclick'] = create_proxy(awrap(state, actions, self._actions['clicked']))
-        return h(osjsGui.Button, toObj(props))
 
 class QLabel(QWidget):
     def __init__(self, text, parent=None):
         super(QLabel, self).__init__(parent)
-        self.text = text
-    def setText(self, text):
-        self.text = text
-    def h(self, state, actions):
-        return h('div', Object(), self.text)
+        self._text = text
+        self._element = jswidgets.TextLabel
+        self._props = {'text':'_text'}
 
 class QLineEdit(QWidget):
-    def __init__(self, text, parent):
+    def __init__(self, text, parent=None):
         super(QLineEdit, self).__init__(parent)
-        self.text = text
-        self._editingFinished = EventProxy(self, 'editingFinished')
+        self._text = text
+        self._element = osjsGui.TextField
+        self._props = {'value':'_text'}
+        self._editingFinished = EventProxy(self, 'onchange', self._editingFinishedWrapper)
+    def _editingFinishedWrapper(self, fn):
+        def efWrap(event, value):
+            self._text = value
+            fn()
+        return efWrap
     def setValidator(self, validator):
         pass
     def setToolTip(self, toolText):
         pass
-    def setText(self, text):
-        self.text = text
-    def text(self):
-        return self.text
     @property
     def editingFinished(self):
         return self._editingFinished

@@ -12,6 +12,7 @@ import "https://cdn.jsdelivr.net/npm/@osjs/client/dist/main.js";
 import "https://cdn.jsdelivr.net/npm/@osjs/panels/dist/main.js";
 import "https://cdn.jsdelivr.net/npm/@osjs/dialogs/dist/main.js";
 import EmscriptenFSAdapter from "./emfs-adapter.js";
+import { jswidgets } from "./widgets.js";
 
 console.log("Imported JS from CDNs")
 
@@ -61,14 +62,17 @@ const onStarted = core => {
     layout = QGridLayout()
     label = QLabel('0')
     def addone(event):
-      label.setText(f'{int(label.text)+1}')
+      label.setText(f'{int(label.text())+1}')
     plusbtn = QPushButton('+')
     plusbtn.clicked.connect(addone)
     minusbtn = QPushButton('-')
-    minusbtn.clicked.connect(lambda ev: label.setText(f'{int(label.text)-1}'))
+    minusbtn.clicked.connect(lambda ev: label.setText(f'{int(label.text())-1}'))
+    editbox = QLineEdit('1')
+    editbox.editingFinished.connect(lambda: label.setText(editbox.text()))
     layout.addWidget(label, 0, 0)
     layout.addWidget(plusbtn, 1, 0)
     layout.addWidget(minusbtn, 0, 1)
+    layout.addWidget(editbox, 2, 0, 1, 2)
     window.setLayout(layout)
     window.show()
     app.exec()
@@ -119,6 +123,7 @@ async function init_python() {
   window.pyodide.registerJsModule("osjsPanels", osjsPanels);
   window.pyodide.registerJsModule("osjsDialogs", osjsDialogs);
   window.pyodide.registerJsModule("hyperapp", {h:h, text:text, app:app});
+  window.pyodide.registerJsModule("jswidgets", jswidgets);
   // Copies files in the overrides folder to Python site-packages folder
   fetch("./python-overrides.tgz").then( (response) => {
     response.arrayBuffer().then( (value) => {
