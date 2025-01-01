@@ -55,8 +55,11 @@ const config = {
 
 const onStarted = core => {
   const exm = window.pyodide.runPython(`
-    # Simple tutorial example
+    # Test script of all currently implemented widgets
     from qtpy.QtWidgets import *
+    msgbox = QMessageBox()
+    msgbox.setText('An important message!')
+    msgbox.exec()
     app = QApplication([])
     window = QWidget()
     layout = QGridLayout()
@@ -79,6 +82,17 @@ const onStarted = core => {
     stateLabel = QLabel('On')
     onBtn.clicked.connect(lambda: stateLabel.setText('On'))
     offBtn.clicked.connect(lambda: stateLabel.setText('Off'))
+    combo = QComboBox()
+    combo.addItem('Apple')
+    combo.addItems(['Pear', 'Orange'])
+    combo.activated[str].connect(lambda text: stateLabel.setText(text))
+    checkb = QCheckBox('Done?', window)
+    checkb.stateChanged.connect(lambda state: stateLabel.setText(str(state)))
+    checkb.setCheckState(True)
+    tabs = QTabWidget()
+    tabs.addTab(QLabel('Page 1'), 'P1')
+    tabs.addTab(QLabel('Page 2'), 'P2')
+    tabs.currentChanged.connect(lambda: stateLabel.setText(str(tabs.currentIndex())))
     frameLayout.addWidget(onBtn)
     frameLayout.addWidget(offBtn)
     frameLayout.addWidget(stateLabel)
@@ -87,7 +101,10 @@ const onStarted = core => {
     layout.addWidget(plusbtn, 1, 0)
     layout.addWidget(minusbtn, 0, 1)
     layout.addWidget(editbox, 2, 0, 1, 2)
-    layout.addWidget(frame, 3, 0, 1, 3)
+    layout.addWidget(frame, 3, 0, 1, 2)
+    layout.addWidget(combo, 4, 0)
+    layout.addWidget(checkb, 4, 1)
+    layout.addWidget(tabs, 5, 0, 1, 2)
     window.setLayout(layout)
     window.show()
     app.exec()
@@ -146,8 +163,8 @@ async function init_python() {
     });
   });
   // Loads Python wheels
-  for (const pkg of ["numpy"]) {//, "scipy", "matplotlib"]) {
-    window.pyodide.loadPackage(pkg);
+  for (const pkg of ["numpy", "matplotlib"]) {//, "scipy"]) {
+    await window.pyodide.loadPackage(pkg);
   }
 };
 
@@ -158,7 +175,7 @@ const pyodide = loadPyodide()
     out.setDebug(true);
     document.getElementById("loading_spinner").remove();
     window.pyodide = out; 
-    init_python();
+    init_python()
     init_osjs();
   }
 );

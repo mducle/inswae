@@ -1,3 +1,9 @@
+"""
+An emulation layer to translate qtpy calls/widgets to hyperapp and OS.js widgets.
+Does not strictly follow the Qt specifications but is meant to work with "real life" code.
+Not all Qt features are implemented.
+"""
+
 import js
 import osjsGui
 from pyodide.ffi import to_js, create_proxy
@@ -17,7 +23,6 @@ class EventProxy():
         self.name = name
         self.wrapper = wrapper
     def connect(self, callback):
-        # Creates a wrapped callback
         if self.wrapper is None:
             self.parent._actions[self.name] = callback
         else:
@@ -74,7 +79,7 @@ class QGridLayout(QLayout):
             nr = max([w[1] for w in self._widgets]) + 1
             nc = max([w[2] for w in self._widgets]) + 1
             gridcss = toObj({'display':'grid', 'grid-gap':'5px', 
-                             'grid-template-columns':f'repeat({nc}, 1fr)', 'grid-template-rows':f'repeat({nr}, 1fr'})
+                             'grid-template-columns':f'repeat({nc}, auto)', 'grid-template-rows':f'repeat({nr}, auto'})
             objs_list = []
             for w in [obj for obj in self._widgets if obj[0].isVisible()]:
                 rowspec = f'{w[1]+1}' if w[3] is None else f'{w[1]+1} / span {w[3]}'
@@ -97,6 +102,8 @@ class QBoxLayout(QLayout, metaclass=MetaQBox):
     def __init__(self, parent=None):
         super(QBoxLayout, self).__init__(parent)
         self._direction = 1
+    def addStretch(self, stretch):
+        pass
     @property
     def Direction(self):
         return self._direction
@@ -145,6 +152,7 @@ class QWidget():
         self._style = {}
         self._framestyle = {}
         self._actions = {}
+        self._toolTip = ''
     def setWindowFlags(self, flags):
         self._flags = flags
     def setWindowTitle(self, title):
@@ -170,6 +178,8 @@ class QWidget():
         return self._text
     def setText(self, text):
         self._text = text
+    def currentText(self):
+        return self._text
     def hide(self):
         self._hidden = True
     def isVisible(self):
@@ -178,25 +188,28 @@ class QWidget():
         if (style | QFrame.NoFrame) == style:
             self._framestyle = {}
         elif (style | QFrame.HLine) == style:
-            self._framestyle = {'border-style':{33:'solid', 34:'outset', 36:'inset'}[style]+' none none none'}
+            self._framestyle = {'border-style':{33:'solid', 34:'outset', 36:'inset'}[style]+' none none none', 'border-color':'white'}
         elif (style | QFrame.VLine) == style:
-            self._framestyle = {'border-style':'none '+{64:'solid', 66:'outset', 68:'inset'}[style]+' none none'}
+            self._framestyle = {'border-style':'none '+{64:'solid', 66:'outset', 68:'inset'}[style]+' none none', 'border-color':'white'}
         else:
-            self._framestyle = {'border-style':{17:'solid', 18:'outset', 20:'inset'}[style]}
+            self._framestyle = {'border-style':{17:'solid', 18:'outset', 20:'inset'}[style], 'border-color':'white'}
     def setLineWidth(self, linewidth):
         self._framestyle.update({'border-width':f'{linewidth}px'})
-    @property
-    def content(self):
+    def setToolTip(self, text):
+        self._toolTip = text
+    def setValidator(self, validator):
+        pass
+    def content(self, state, actions):
         return []
     def h(self, state, actions):
         style = {**self._style, **self._framestyle}
         if self._layout is None:
-            props = {k:getattr(self, v) for k, v in self._props.items()}
+            props = {k:(getattr(self, v) if isinstance(v, str) and hasattr(self, v) else v) for k, v in self._props.items()}
             if style:
                 props['style'] = toObj(style)
             for k, v in self._actions.items():
                 props[k] = create_proxy(action_wrap(state, actions, v))
-            return h(self._element, toObj(props), self.content)
+            return h(self._element, toObj(props), self.content(state, actions))
         else:
             if style:
                 self._layout._styles = style
@@ -241,10 +254,126 @@ class QLineEdit(QWidget):
             self._text = value
             fn()
         return efWrap
-    def setValidator(self, validator):
-        pass
-    def setToolTip(self, toolText):
-        pass
     @property
     def editingFinished(self):
         return self._editingFinished
+
+class QComboBoxActivatedProxy():
+    # To handle both the .activated.connect and .activated[str].connect syntax
+    def __init__(self, parent):
+        self.parent = parent
+    def connect(self, fn):
+        def actWrap(event, value, choices):
+            index = self.parent._items.index(value)
+            self.parent._text = self.parent._items[index]
+            fn(index)
+        self.parent._actions['onchange'] = actWrap
+    def __getitem__(self, inputtype):
+        if isinstance(inputtype, str) or (inputtype == str):
+            return self.parent._activated
+        return self
+            
+class QComboBox(QWidget):
+    def __init__(self, parent=None):
+        super(QComboBox, self).__init__(parent)
+        self._element = osjsGui.SelectField
+        self._items = []
+        self._text = ''
+        self._activatedproxy = QComboBoxActivatedProxy(self)
+        self._activated = EventProxy(self, 'onchange', self._activatedWrapper)
+        self._props = {'choices':'_items'}
+    def addItem(self, text):
+        self._items.append(text)
+        if self._text == '' and len(self._items) == 1:
+            self._text = self._items[0]
+    def addItems(self, texts):
+        self._items += texts
+        if self._text == '' and len(self._items) > 0:
+            self._text = self._items[0]
+    def clear(self):
+        self._items = []
+    def count(self):
+        return len(self._items)
+    def _activatedWrapper(self, fn):
+        def actWrap(event, value, choices):
+            self._text = value
+            fn(value)
+        return actWrap
+    @property
+    def activated(self):
+        return self._activatedproxy
+
+class QTabWidget(QWidget):
+    def __init__(self, parent=None):
+        super(QTabWidget, self).__init__(parent)
+        self._element = osjsGui.Tabs
+        self._tabs = []
+        self._tabTitles = []
+        self._props = {'labels':'_tabTitles', 'grow':1, 'shrink':1}
+        self._currentChanged = EventProxy(self, 'onchange', self._currentChangedWrapper)
+        self._index = 0
+    def addTab(self, widget, title):
+        self._tabs.append(widget)
+        self._tabTitles.append(title)
+    def currentIndex(self):
+        return self._index
+    def _currentChangedWrapper(self, fn):
+        def changeWrap(event, index, value):
+            self._index = index
+            self._text = value
+            fn()
+        return changeWrap
+    @property
+    def currentChanged(self):
+        return self._currentChanged
+    def content(self, state, actions):
+        return [w.h(state, actions) for w in self._tabs if w.isVisible()]
+
+#class QStackedWidget(QWidget):
+#    def __init__(self, parent=None):
+#        super(QStackedWidget, self).__init__(parent)
+
+class QMessageBox(QWidget):
+    def __init__(self, parent=None):
+        super(QMessageBox, self).__init__(parent)
+    def show(self):
+        self.exec()
+    def exec(self):
+        window.osjs.make('osjs/dialog', 'alert', toObj({'message':self._text, 'title':' ', 'sound':''}), create_proxy(lambda e, v, l:[]))
+
+class QCheckBox(QWidget):
+    def __init__(self, label, parent=None):
+        super(QCheckBox, self).__init__(parent)
+        self._element = osjsGui.ToggleField
+        self._text = label
+        self._checked = False
+        self._props = {'label':'_text', 'checked':'_checked'}
+        self._stateChanged = EventProxy(self, 'onchange', self._stateChangedWrapper)
+    def setCheckState(self, state):
+        self._checked = state
+    def isChecked(self):
+        return self._checked
+    def _stateChangedWrapper(self, fn):
+        def stateWrap(event, value):
+            self._checked = value
+            fn(value)
+        return stateWrap
+    @property
+    def stateChanged(self):
+        return self._stateChanged
+
+"""
+class QAction(QWidget):
+
+class QDialog(QWidget):
+class QFileDialog(QWidget):
+class QMenu(QWidget):
+class QMainWindow(QWidget):
+class QSpacerItem(QWidget):
+class QTextEdit(QWidget):
+class QTableView(QWidget):
+class QHeaderView(QWidget):
+class QGroupBox(QWidget):
+class QProgressDialog(QWidget):
+
+"""
