@@ -136,5 +136,14 @@
       "https://cdn.jsdelivr.net/npm/@osjs/windows8-theme@4.0.6/dist/main.js",
       "https://cdn.jsdelivr.net/npm/@osjs/windows8-theme@4.0.6/dist/main.css"
     ]
+  },
+  {
+    "type": "application",
+    "name": "QECoverage",
+    "title": { "en_EN": "Q-E Coverage" },
+    "description": { "en_EN": "Calculates Q-E kinematic trajectory limits" },
+    "files": [
+      "main.js"
+    ]
   }
 ]

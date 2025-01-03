@@ -44,7 +44,7 @@ class QApplication():
                 def createApp(content, win):
                     renderfn = create_proxy(self.window._layout.render_function)
                     return app(toObj({'stateid':0}), toObj({'change':create_proxy(state_change)}), renderfn, content)
-                proc.createWindow(toObj({'title': self.window._title, 'dimension':{'width':500, 'height':300}})).render(createApp)
+                proc.createWindow(toObj({'title': self.window._title, 'dimension':self.window._size()})).render(createApp)
             return callback
 
 def action_wrap(state, actions, call):
@@ -159,15 +159,18 @@ class QWidget():
         self._title = title
     def setLayout(self, layout):
         self._layout = layout
+    def _size(self):
+        return {'width': 500 if 'width' not in self._style else self._style['width'],
+                'height': 300 if 'height' not in self._style else self._style['height']}
     def show(self):
         if self.parent == None:   # Is an independent window
             if self._layout is None:
                 raise RuntimeError('Custom top level widget has no layout')
             self._layout._styles = {**self._style, **self._framestyle}
             if QAPP is None:
-                window_data = toObj({'title': self._title})
+                window_data = toObj({'title': self._title, 'dimension':self._size()})
                 def createApp(content, win):
-                    renderfn = create_proxy(self.window._layout.render_function)
+                    renderfn = create_proxy(self._layout.render_function)
                     return app(toObj({'stateid':0}), toObj({'change':create_proxy(state_change)}), renderfn, content)
                 window.osjs.make('osjs/window', window_data).render(createApp)
             else:
@@ -198,6 +201,8 @@ class QWidget():
     def setToolTip(self, text):
         self._toolTip = text
     def setValidator(self, validator):
+        pass
+    def setMaximumWidth(self, maxwidth):
         pass
     def content(self, state, actions):
         return []
@@ -248,6 +253,7 @@ class QLineEdit(QWidget):
         self._text = text
         self._element = osjsGui.TextField
         self._props = {'value':'_text'}
+        self._actions['onchange'] = self._editingFinishedWrapper(lambda:[])
         self._editingFinished = EventProxy(self, 'onchange', self._editingFinishedWrapper)
     def _editingFinishedWrapper(self, fn):
         def efWrap(event, value):

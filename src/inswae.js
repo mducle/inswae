@@ -166,6 +166,39 @@ async function init_python() {
   for (const pkg of ["numpy", "matplotlib"]) {//, "scipy"]) {
     await window.pyodide.loadPackage(pkg);
   }
+/*
+  // Ensure we use the HTML5 backend
+  window.pyodide.runPython(`
+    import matplotlib
+    matplotlib.use("module://matplotlib_pyodide.html5_canvas_backend")
+  `);
+  const qe_app = window.pyodide.runPython("import inswae; inswae.create_QE_app()");
+  const pkg = window.osjs.make('osjs/packages');
+  pkg.addPackages([ { "name": "QECoverage", "category": "mantid",
+    "title": { "en_EN": "QECoverage" },
+    "description": { "en_EN": "Calculates Q-E kinematic limits" } } ]);
+  pkg.register("QECoverage", qe_app);
+  window.pyodide.runPython(`
+    from qtpy.QtWidgets import *
+    from matplotlib.figure import Figure
+    from mantidqt.MPLwidgets import FigureCanvas
+    import time
+    import js
+    window = QWidget()
+    layout = QGridLayout()
+    fig = Figure()
+    canvas = FigureCanvas(fig)
+    axes = fig.add_subplot(111)
+    axes.plot(range(1,10), range(2,11))
+    axes.axhline(color="k")
+    axes.set_xlabel(r"$|Q|$ ($\AA^{-1}$)")
+    axes.set_ylabel("Energy Transfer (meV)")
+    canvas.draw()
+    layout.addWidget(canvas, 0, 0)
+    window.setLayout(layout)
+    window.show()
+  `);
+*/
 };
 
 // We need Pyodide to be loaded first before initialising OS.js as we
@@ -175,7 +208,7 @@ const pyodide = loadPyodide()
     out.setDebug(true);
     document.getElementById("loading_spinner").remove();
     window.pyodide = out; 
-    init_python()
+    init_python();
     init_osjs();
   }
 );

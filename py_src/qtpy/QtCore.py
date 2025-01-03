@@ -26,7 +26,13 @@ class Qt(metaclass=MetaQt):
         pass
 
 class QRegExp():
-    pass
+    def __init__(self, regexp):
+        self._regex = regexp
 
 class QProcess():
-    pass
+    def __init__(self, parent=None):
+        self.parent = parent
+    def close(self):
+        pass
+    def waitForFinished(self):
+        pass
