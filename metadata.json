@@ -25,20 +25,20 @@
     ]
   },
   {
-    "name": "Textpad",
+    "name": "AceEditor",
     "category": "utilities",
-    "icon": "https://cdn.jsdelivr.net/npm/@osjs/textpad-application@1.2.7/dist/icon.png",
+    "icon": "https://cdn.jsdelivr.net/npm/@osjs/ace-application@1.2.7/dist/icon.png",
     "title": {
-      "en_EN": "Textpad",
-      "nb_NO": "Tekstblokk",
-      "fr_FR": "Bloc-notes",
-      "pt_BR": "Bloco de Notas"
+      "en_EN": "Ace Editor",
+      "nb_NO": "Ace Editor",
+      "fr_FR": "Éditeur de texte Ace",
+      "pt_BR": "Editor Ace"
     },
     "description": {
-      "en_EN": "Edit text files",
-      "nb_NO": "Redigèr tekstfiler",
-      "fr_FR": "Bloc-notes",
-      "pt_BR": "Editor de arquivos de texto"
+      "en_EN": "Ace Editor",
+      "nb_NO": "Ace er en teksteditor med fokus på programmering",
+      "fr_FR": "Éditeur de texte Ace",
+      "pt_BR": "Editor de texto Ace"
     },
     "mimes": [
       "^text/(.*)",
@@ -61,7 +61,7 @@
       "application/x-sh"
     ],
     "files": [
-      "https://cdn.jsdelivr.net/npm/@osjs/textpad-application@1.2.7/dist/main.js"
+      "https://cdn.jsdelivr.net/npm/@osjs/ace-application@1.2.7/dist/main.js"
     ]
   },
   {
@@ -138,10 +138,23 @@
     ]
   },
   {
-    "type": "application",
     "name": "QECoverage",
+    "type": "application",
+    "category": "science",
+    "icon": "qecoverage.png",
     "title": { "en_EN": "Q-E Coverage" },
     "description": { "en_EN": "Calculates Q-E kinematic trajectory limits" },
+    "files": [
+      "main.js"
+    ]
+  },
+  {
+    "name": "TofConverter",
+    "type": "application",
+    "category": "science",
+    "icon": "tofconverter.png",
+    "title": { "en_EN": "ToF Converter" },
+    "description": { "en_EN": "Converts between different neutron scattering units" },
     "files": [
       "main.js"
     ]

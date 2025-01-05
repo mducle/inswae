@@ -3,6 +3,7 @@
 @import url("https://cdn.jsdelivr.net/npm/@osjs/dialogs/dist/main.css");
 @import url("https://cdn.jsdelivr.net/npm/@osjs/panels/dist/main.css");
 @import url("https://cdn.jsdelivr.net/npm/@osjs/standard-theme/dist/main.css");
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css");
 
 .osjs-panel img,
 .osjs-window-top img {

@@ -1,9 +1,14 @@
 import js
 
-class logger():
+class Logger():
     @staticmethod
     def warning(message):
-        js.console.log(f'Warning: {message}')
+        js.console.warn(message)
+    @staticmethod
+    def error(message):
+        js.console.error(message)
+
+logger = Logger
 
 class FeatureTypeMeta(type):
     Interface = property(lambda self: 'interface')

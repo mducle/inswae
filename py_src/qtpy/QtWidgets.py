@@ -181,6 +181,10 @@ class QWidget():
         return self._text
     def setText(self, text):
         self._text = text
+    def insert(self, text):
+        self._text = text
+    def clear(self):
+        self._text = ''
     def currentText(self):
         return self._text
     def hide(self):
@@ -200,9 +204,23 @@ class QWidget():
         self._framestyle.update({'border-width':f'{linewidth}px'})
     def setToolTip(self, text):
         self._toolTip = text
+    def setGeometry(self, x, y, w, h):
+        self._style.update({'left':x, 'top':y, 'width':w, 'height':h})
+    def setEnabled(self, value):
+        self._props.pop('disabled', None) if value else self._props.update({'disabled':1})
     def setValidator(self, validator):
         pass
     def setMaximumWidth(self, maxwidth):
+        pass
+    def setMaximumSize(self, maxsize):
+        pass
+    def setMinimumSize(self, minsize):
+        pass
+    def setSizePolicy(self, sizePolicy):
+        pass
+    def setAnimated(self, policy):
+        pass
+    def setDocumentMode(self, policy):
         pass
     def content(self, state, actions):
         return []
@@ -225,8 +243,17 @@ class QFrame(QWidget, metaclass=MetaQFrame):
         super(QFrame, self).__init__(parent)
         self._element = 'div'
 
+class QMainWindow(QWidget):
+    def __init__(self, parent=None, flags=None):
+        super(QMainWindow, self).__init__(parent)
+        self._element = 'div'
+        self._layout = QBoxLayout()
+    def setCentralWidget(self, widget):
+        self._layout._widgets = [widget]
+        widget.parent = self
+
 class QPushButton(QWidget):
-    def __init__(self, text, parent=None):
+    def __init__(self, text='', parent=None):
         super(QPushButton, self).__init__(parent)
         self._text = text
         self._element = osjsGui.Button
@@ -241,14 +268,14 @@ class QPushButton(QWidget):
         return self._clicked
 
 class QLabel(QWidget):
-    def __init__(self, text, parent=None):
+    def __init__(self, text='', parent=None):
         super(QLabel, self).__init__(parent)
         self._text = text
         self._element = jswidgets.TextLabel
         self._props = {'text':'_text'}
 
 class QLineEdit(QWidget):
-    def __init__(self, text, parent=None):
+    def __init__(self, text='', parent=None):
         super(QLineEdit, self).__init__(parent)
         self._text = text
         self._element = osjsGui.TextField
@@ -287,7 +314,9 @@ class QComboBox(QWidget):
         self._text = ''
         self._activatedproxy = QComboBoxActivatedProxy(self)
         self._activated = EventProxy(self, 'onchange', self._activatedWrapper)
+        self._currentChangedproxy = EventProxy(self, 'onchange', self._currChangeWrapper)
         self._props = {'choices':'_items'}
+        self._actions['onchange'] = self._activatedWrapper(lambda v:[])
     def addItem(self, text):
         self._items.append(text)
         if self._text == '' and len(self._items) == 1:
@@ -308,6 +337,17 @@ class QComboBox(QWidget):
     @property
     def activated(self):
         return self._activatedproxy
+    def _currChangeWrapper(self, fn):
+        def curIndWrap(event, value, choices):
+            self._text = value
+            fn()
+        return curIndWrap
+    @property
+    def currentIndexChanged(self):
+        return self._currentChangedproxy
+    @property
+    def currentTextChanged(self):
+        return self._currentChangedproxy
 
 class QTabWidget(QWidget):
     def __init__(self, parent=None):
@@ -316,6 +356,7 @@ class QTabWidget(QWidget):
         self._tabs = []
         self._tabTitles = []
         self._props = {'labels':'_tabTitles', 'grow':1, 'shrink':1}
+        self._actions['onchange'] = self._currentChangedWrapper(lambda:[])
         self._currentChanged = EventProxy(self, 'onchange', self._currentChangedWrapper)
         self._index = 0
     def addTab(self, widget, title):
@@ -348,12 +389,13 @@ class QMessageBox(QWidget):
         window.osjs.make('osjs/dialog', 'alert', toObj({'message':self._text, 'title':' ', 'sound':''}), create_proxy(lambda e, v, l:[]))
 
 class QCheckBox(QWidget):
-    def __init__(self, label, parent=None):
+    def __init__(self, label='', parent=None):
         super(QCheckBox, self).__init__(parent)
         self._element = osjsGui.ToggleField
         self._text = label
         self._checked = False
         self._props = {'label':'_text', 'checked':'_checked'}
+        self._actions['onchange'] = self._stateChangedWrapper(lambda v:[])
         self._stateChanged = EventProxy(self, 'onchange', self._stateChangedWrapper)
     def setCheckState(self, state):
         self._checked = state
@@ -368,6 +410,18 @@ class QCheckBox(QWidget):
     def stateChanged(self):
         return self._stateChanged
 
+class QGroupBox(QWidget):
+    def __init__(self, parent=None):
+        super(QGroupBox, self).__init__(parent)
+        self._element = 'div'
+        self._style = {'border':'1px solid black'}
+
+class Line(QWidget):
+    def __init__(self, parent=None):
+        super(Line, self).__init__(parent)
+        self._element = 'hr'
+
+
 """
 class QAction(QWidget):
 
@@ -379,7 +433,6 @@ class QSpacerItem(QWidget):
 class QTextEdit(QWidget):
 class QTableView(QWidget):
 class QHeaderView(QWidget):
-class QGroupBox(QWidget):
 class QProgressDialog(QWidget):
 
 """

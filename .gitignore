@@ -1,2 +1,6 @@
 node_modules
+package-lock.json
 python-overrides.tgz
+*.swp
+*.swo
+*-v0

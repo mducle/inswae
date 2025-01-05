@@ -7,8 +7,9 @@ class FigureCanvas(FigureCanvasHTMLCanvas, QWidget):
         FigureCanvasHTMLCanvas.__init__(self, *arg, **kwargs)
         QWidget.__init__(self)
         self._element = 'iframe'
-        self.toolbar = NavigationToolbar2HTMLCanvas(self)
+        self._style = {'border':'none'}
         self._actions = {'onload':self._onloadWrapper()}
+        self.toolbar = NavigationToolbar2HTMLCanvas(self)
     def _onloadWrapper(self):
         def loadWrap(event):
             self._div = js.document.getElementById(self._id + '_rootdiv')
