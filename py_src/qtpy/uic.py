@@ -80,7 +80,8 @@ def _processWidget(parentbase, widget, instance=None):
             instance.setHeaderLabels(cols)
     return instance
     
-def _create_instance(basewidget, baseinstance):
+def _create_instance(uidict, baseinstance):
+    basewidget = uidict['widget']
     _processWidget(baseinstance, basewidget, baseinstance)
     if 'layout' not in basewidget:
         if isinstance(basewidget['widget'], list):
@@ -93,10 +94,14 @@ def _create_instance(basewidget, baseinstance):
             w0 = basewidget['widget']
         centralwidget = _processWidget(baseinstance, w0)
         baseinstance.setCentralWidget(centralwidget)
+    if 'connections' in uidict and uidict['connections'] and 'connection' in uidict['connections']:
+        cons = uidict['connections']['connection']
+        for cn in (cons if isinstance(cons, list) else [cons]):
+            sig, slot = (cn[k].split('(')[0] for k in ['signal', 'slot'])
+            getattr(getattr(baseinstance, cn['sender']), sig).connect(getattr(getattr(baseinstance, cn['receiver']), slot))
 
 class _UILoader():
     def __init__(self, uifile, baseinstance=None, noinstance=False):
-        print('Own!')
         with open(uifile, 'r') as f:
             self.uidict = xmltodict.parse(f.read())
         clsname = self.uidict['ui']['class'] if 'class' in self.uidict['ui'].keys() else 'customWidget'
@@ -106,18 +111,18 @@ class _UILoader():
             def initfun(this, *args, **kwargs):
                 this.uidict = self.uidict
             def setUi(this, win):
-                _create_instance(this.uidict['ui']['widget'], win)
+                _create_instance(self.uidict['ui'], win)
             self.classtype = type(clsname, (), {'__init__':initfun, 'setupUi':setUi})
             def superinitfun(this, *args, **kwargs):
                 classcon.__init__(this, *args, **kwargs)
                 this.uidict = self.uidict
-                _create_instance(this.uidict['ui']['widget'], this)
+                _create_instance(this.uidict['ui'], this)
             self.superclasstype = type(clsname, (classcon,), {'__init__':superinitfun})
             if QtWidgets.QApplication.instance() is not None:
                 self.baseinstance = self.superclasstype()
         else:
             assert isinstance(baseinstance, classcon)
-            _create_instance(self.uidict['ui']['widget'], self.baseinstance)
+            _create_instance(self.uidict['ui'], self.baseinstance)
 
 def loadUi(uifile, baseinstance=None, workingDirectory=None):
     if workingDirectory is not None:

@@ -27,6 +27,8 @@ class FigureCanvas(FigureCanvasHTMLCanvas, QWidget):
         # Overrides so it is not included in the "pyodideMplTarget" element
         return self._div
 
+FigureCanvasQTAgg = FigureCanvas
+
 # Never render navigation toolbar separately, always bundle it a FigureCanvas
 class NavigationToolbar2QT():
     def __init__(self, canvas, parent, coordinates=True):

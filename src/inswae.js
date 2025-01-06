@@ -54,6 +54,30 @@ const config = {
 };
 
 const onStarted = core => {
+  const exm = window.pyodide.runPython(`
+    # Test script of all currently implemented widgets
+    from qtpy.QtWidgets import *
+    app = QApplication([])
+    window = QWidget()
+    layout = QHBoxLayout()
+    label = QLabel('Spin!')
+    spinner = QDoubleSpinBox()
+    layout.addWidget(label)
+    layout.addWidget(spinner)
+    window.setLayout(layout)
+    window.show()
+    app.exec()
+  `);
+  const pkg = core.make('osjs/packages');
+  pkg.addPackages([ {
+    "name": "Exm",
+    "category": "utilities",
+    "title": { "en_EN": "Exm" },
+    "description": { "en_EN": "Example Python App" }
+  } ]);
+  pkg.register("Exm", exm);
+  console.log(pkg.getPackages());
+  pkg.launch('Exm');
 };
 
 const init_osjs = () => {
@@ -109,7 +133,8 @@ async function init_python() {
                    '"label": null, "stat": {}, "id": null, "parent_id": null, "humanSize": "0 B", '
   fs.writeFile('/home/pyodide/.desktop/.shortcuts.json', '[' +
      shortobj + '"icon": "apps/QECoverage/qecoverage.png", "path": "apps:/QECoverage", "filename": "QECoverage" }, ' +
-     shortobj + '"icon": "apps/TofConverter/tofconverter.png", "path": "apps:/TofConverter", "filename": "TofConverter" }'
+     shortobj + '"icon": "apps/TofConverter/tofconverter.png", "path": "apps:/TofConverter", "filename": "TofConverter" }, ' +
+     shortobj + '"icon": "apps/SampleTransmission/icon.png", "path": "apps:/SampleTransmission", "filename": "SampleTransmission" }'
   +']');
   window.osjs.make('osjs/settings').set('osjs/desktop', 'iconview.enabled', true).save()
 };

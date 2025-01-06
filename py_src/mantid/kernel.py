@@ -12,6 +12,18 @@ logger = Logger
 
 class FeatureTypeMeta(type):
     Interface = property(lambda self: 'interface')
+class FeatureType(metaclass=FeatureTypeMeta): ...
 
-class FeatureType(metaclass=FeatureTypeMeta):
-    pass 
+class DirectionMeta(type):
+    Input = property(lambda self: 'input')
+    Output = property(lambda self: 'output')
+class Direction(metaclass=DirectionMeta): ...
+    
+class MaterialBuilder():
+    pass
+
+class StringListValidator():
+    pass
+
+class StringMandatoryValidator():
+    pass

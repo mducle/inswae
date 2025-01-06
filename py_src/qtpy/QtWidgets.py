@@ -35,6 +35,10 @@ class QApplication():
         QAPP = self
     def set_window(self, window):
         self.window = window
+    @staticmethod
+    def instance():
+        global QAPP
+        return QAPP
     def exec(self):
         global QAPP
         QAPP = None
@@ -66,11 +70,22 @@ class QLayout():
     def addWidget(self, widget):
         self._widgets.append(widget) 
         widget.parent = self
+    def replaceWidget(self, old, new):
+        found = False
+        for i, w in enumerate(self._widgets):
+            if (w[0] if isinstance(w, list) else w) == old:
+                found = True
+                break
+        if found:
+            if isinstance(w, list):
+                self._widgets[i][0] = new
+            else:
+                self._widgets[i] = new
 
 class QGridLayout(QLayout):
     def __init__(self, parent=None):
         super(QGridLayout, self).__init__(parent)
-    def addWidget(self, widget, row, column, rowSpan=None, columnSpan=None, alignment=Qt.AlignCenter):
+    def addWidget(self, widget, row=0, column=0, rowSpan=None, columnSpan=None, alignment=Qt.AlignCenter):
         self._widgets.append([widget, row, column, rowSpan, columnSpan])
         widget.parent = self
     @property
@@ -153,6 +168,7 @@ class QWidget():
         self._framestyle = {}
         self._actions = {}
         self._toolTip = ''
+        self._element = 'div'
     def setWindowFlags(self, flags):
         self._flags = flags
     def setWindowTitle(self, title):
@@ -221,6 +237,8 @@ class QWidget():
     def setAnimated(self, policy):
         pass
     def setDocumentMode(self, policy):
+        pass
+    def setStyleSheet(self, style):
         pass
     def content(self, state, actions):
         return []
@@ -421,18 +439,64 @@ class Line(QWidget):
         super(Line, self).__init__(parent)
         self._element = 'hr'
 
+# Widgets needed for SampleTransmission
+class QDoubleSpinBox(QWidget):
+    def __init__(self, parent=None):
+        super(QDoubleSpinBox, self).__init__(parent)
+        self._element = jswidgets.NumberSpinner
+        self._min, self._max, self._value, self._step = (-1, 1, 0, 0.1)
+        self._props = {'value':'_value', 'min':'_min', 'max':'_max', 'step':'_step'}
+        self._textChanged = EventProxy(self, 'onchange', self._textChangedWrapper)
+    def setDecimals(self, value):
+        pass
+    def setMinimum(self, value):
+        self._min = value
+    def setMaximum(self, value):
+        self._max = value
+    def setSingleStep(self, value):
+        self._step = value
+    def _textChangedWrapper(self, fn):
+        def Wrap(*args):
+            for a in args: js.console.log(a)
+        return Wrap 
+    @property
+    def textChanged(self):
+        return self._textChanged
+
+class QTreeWidget(QWidget):
+    def __init__(self, parent=None):
+        super(QTreeWidget, self).__init__(parent)
+        self._element = 'div'
+    def setColumnCount(self, ncols):
+        self._ncols = ncols
+    def setHeaderLabels(self, cols):
+        self._headers = cols
+
+# Widgets needed for PyChop
+class QDialog(QWidget):
+    def __init__(self, parent=None):
+        super(QDialog, self).__init__(parent)
+
+class QFileDialog(QWidget):
+    def __init__(self, parent=None):
+        super(QFileDialog, self).__init__(parent)
+
+class QMenu(QWidget):
+    def __init__(self, parent=None):
+        super(QMenu, self).__init__(parent)
+
+class QSpacerItem(QWidget):
+    def __init__(self, parent=None):
+        super(QSpacerItem, self).__init__(parent)
+
+class QTextEdit(QWidget):
+    def __init__(self, parent=None):
+        super(QTextEdit, self).__init__(parent)
 
 """
 class QAction(QWidget):
 
-class QDialog(QWidget):
-class QFileDialog(QWidget):
-class QMenu(QWidget):
-class QMainWindow(QWidget):
-class QSpacerItem(QWidget):
-class QTextEdit(QWidget):
 class QTableView(QWidget):
 class QHeaderView(QWidget):
 class QProgressDialog(QWidget):
-
 """
