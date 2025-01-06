@@ -54,30 +54,6 @@ const config = {
 };
 
 const onStarted = core => {
-  const exm = window.pyodide.runPython(`
-    # Test script of all currently implemented widgets
-    from qtpy.QtWidgets import *
-    app = QApplication([])
-    window = QWidget()
-    layout = QHBoxLayout()
-    label = QLabel('Spin!')
-    spinner = QDoubleSpinBox()
-    layout.addWidget(label)
-    layout.addWidget(spinner)
-    window.setLayout(layout)
-    window.show()
-    app.exec()
-  `);
-  const pkg = core.make('osjs/packages');
-  pkg.addPackages([ {
-    "name": "Exm",
-    "category": "utilities",
-    "title": { "en_EN": "Exm" },
-    "description": { "en_EN": "Example Python App" }
-  } ]);
-  pkg.register("Exm", exm);
-  console.log(pkg.getPackages());
-  pkg.launch('Exm');
 };
 
 const init_osjs = () => {
@@ -115,19 +91,15 @@ async function init_python() {
   window.pyodide.registerJsModule("osjsDialogs", osjsDialogs);
   window.pyodide.registerJsModule("hyperapp", {h:h, text:text, app:app});
   window.pyodide.registerJsModule("jswidgets", jswidgets);
+  const fs = window.pyodide.FS;
   // Copies files in the overrides folder to Python site-packages folder
-  fetch("./python-overrides.tgz").then( (response) => {
-    response.arrayBuffer().then( (value) => {
-      window.pyodide.unpackArchive(value, "gztar", {extractDir: "/lib/python3.11/site-packages/"});
-    });
-  });
+  await window.pyodide.loadPackage("python-overrides.whl");
   // Loads Python wheels
   for (const pkg of ["numpy", "matplotlib"]) {//, "scipy"]) {
     await window.pyodide.loadPackage(pkg);
   }
   document.getElementById("loading_spinner").remove();
   // Creates shortcuts
-  const fs = window.pyodide.FS;
   if (!fs.analyzePath('/home/pyodide/.desktop').exists) { fs.mkdir('/home/pyodide/.desktop'); }
   const shortobj = '{"isDirectory": false, "isFile": true, "mime": "osjs/application", "size": 0, ' + 
                    '"label": null, "stat": {}, "id": null, "parent_id": null, "humanSize": "0 B", '
@@ -137,6 +109,42 @@ async function init_python() {
      shortobj + '"icon": "apps/SampleTransmission/icon.png", "path": "apps:/SampleTransmission", "filename": "SampleTransmission" }'
   +']');
   window.osjs.make('osjs/settings').set('osjs/desktop', 'iconview.enabled', true).save()
+/*
+  const exm = window.pyodide.runPython(`
+    # Test script of all currently implemented widgets
+    from qtpy.QtWidgets import *
+    app = QApplication([])
+    window = QWidget()
+    layout = QHBoxLayout()
+    label = QLabel('Spin!')
+    spinner = QDoubleSpinBox()
+    layout.addWidget(label)
+    layout.addWidget(spinner)
+    window.setLayout(layout)
+    window.show()
+    app.exec()
+  `);
+  const pkg = window.osjs.make('osjs/packages');
+  pkg.addPackages([ {
+    "name": "Exm",
+    "category": "utilities",
+    "title": { "en_EN": "Exm" },
+    "description": { "en_EN": "Example Python App" }
+  } ]);
+  pkg.register("Exm", exm);
+  console.log(pkg.getPackages());
+  pkg.launch('Exm');
+*/
+  window.pyodide.runPython(`
+    from mantid.simpleapi import CalculateSampleTransmission
+    transmission_ws = CalculateSampleTransmission(
+        WavelengthRange='0.0,0.2,2.0',
+        ChemicalFormula='Li',
+        DensityType='Mass Density',
+        density=0.1,
+        thickness=0.1,
+    )
+  `);
 };
 
 // We need Pyodide to be loaded first before initialising OS.js as we

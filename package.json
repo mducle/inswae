@@ -1,11 +1,10 @@
 {
   "scripts": {
-    "prestart": "cd py_src && tar czf ../python-overrides.tgz * || exit 0",
+    "prestart": "node src/zip.js py_src python-overrides.whl",
     "start": "browser-sync start --server . --files src/ --files py_src/ --single --config ./bs-config.js"
   },
   "dependencies": {
     "browser-sync": "^3.0.3",
-    "targz": "1.0.1",
-    "tar": "6.2.1"
+    "adm-zip": "^0.5.16"
   }
 }

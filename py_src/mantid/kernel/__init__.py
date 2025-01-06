@@ -1,3 +1,4 @@
+from . import funcinspect
 import js
 
 class Logger():
@@ -23,7 +24,8 @@ class MaterialBuilder():
     pass
 
 class StringListValidator():
-    pass
+    def __init__(self, values):
+        self._values = values
 
 class StringMandatoryValidator():
     pass

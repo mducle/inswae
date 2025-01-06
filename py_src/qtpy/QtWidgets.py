@@ -358,11 +358,16 @@ class QComboBox(QWidget):
     def _currChangeWrapper(self, fn):
         def curIndWrap(event, value, choices):
             self._text = value
-            fn()
+            try:
+                fn(self._items.index(value))
+            except TypeError:
+                fn()
         return curIndWrap
     @property
     def currentIndexChanged(self):
         return self._currentChangedproxy
+    def currentIndex(self):
+        return self._items.index(self._text)
     @property
     def currentTextChanged(self):
         return self._currentChangedproxy
@@ -394,9 +399,18 @@ class QTabWidget(QWidget):
     def content(self, state, actions):
         return [w.h(state, actions) for w in self._tabs if w.isVisible()]
 
-#class QStackedWidget(QWidget):
-#    def __init__(self, parent=None):
-#        super(QStackedWidget, self).__init__(parent)
+class QStackedWidget(QWidget):
+    def __init__(self, parent=None):
+        super(QStackedWidget, self).__init__(parent)
+        self._pages = []
+        self._index = 0
+    def addWidget(self, widget):
+        self._pages.append(widget)
+    def setCurrentIndex(self, index):
+        self._index = int(index)
+    def h(self, state, actions):
+        assert self._index < len(self._pages)
+        return self._pages[self._index].h(state, actions)
 
 class QMessageBox(QWidget):
     def __init__(self, parent=None):
@@ -444,20 +458,28 @@ class QDoubleSpinBox(QWidget):
     def __init__(self, parent=None):
         super(QDoubleSpinBox, self).__init__(parent)
         self._element = jswidgets.NumberSpinner
-        self._min, self._max, self._value, self._step = (-1, 1, 0, 0.1)
+        self._min, self._max, self._value, self._step, self._suffix = (0.0, 99.99, 0, 1.0, '')
         self._props = {'value':'_value', 'min':'_min', 'max':'_max', 'step':'_step'}
         self._textChanged = EventProxy(self, 'onchange', self._textChangedWrapper)
+        self._actions['onchange'] = self._textChangedWrapper(lambda x:[])
     def setDecimals(self, value):
         pass
+    def setValue(self, value):
+        self._value = value
     def setMinimum(self, value):
         self._min = value
     def setMaximum(self, value):
         self._max = value
     def setSingleStep(self, value):
         self._step = value
+    def setSuffix(self, value):
+        self._suffix = value
+    def value(self):
+        return float(self._value)
     def _textChangedWrapper(self, fn):
-        def Wrap(*args):
-            for a in args: js.console.log(a)
+        def Wrap(event, value):
+            self._value = value
+            fn(value)
         return Wrap 
     @property
     def textChanged(self):

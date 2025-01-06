@@ -20,6 +20,6 @@ def createSampleTransmission():
     from mantidqtinterfaces.SampleTransmissionCalculator import stc_gui
     app = QApplication([])
     planner = stc_gui.SampleTransmissionCalculator(None, None)
-    planner._style = {'width':1000, 'height':700}
+    planner._style = {'width':1000, 'height':750}
     planner.show()
     return app.exec()

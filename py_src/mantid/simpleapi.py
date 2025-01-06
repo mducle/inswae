@@ -1,5 +1,3 @@
-from . import algorithms as alg
-
 class AnalysisDataService():
     @staticmethod
     def getObjectNames():
@@ -21,5 +19,6 @@ def SetSampleMaterial(*args, **kwargs):
     pass
 
 def CalculateSampleTransmission(*args, **kwargs):
-    this_alg = alg.CalculateSampleTransmission()
-    return this_alg(*args, **kwargs)
+    from .algorithms import CalculateSampleTransmission as this_alg
+    alg_instance = this_alg()
+    return alg_instance(*args, **kwargs)
