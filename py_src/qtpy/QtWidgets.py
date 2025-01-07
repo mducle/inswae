@@ -11,6 +11,7 @@ from js import Object, window
 from hyperapp import h, text, app
 import jswidgets
 from .QtCore import Qt
+from collections import OrderedDict
 
 QAPP = None
 
@@ -67,9 +68,11 @@ class QLayout():
         self.parent = parent
         self._widgets = []
         self._styles = {}
-    def addWidget(self, widget):
+    def addWidget(self, widget, *args, **kwargs):
         self._widgets.append(widget) 
         widget.parent = self
+    def addItem(self, item):
+        pass
     def replaceWidget(self, old, new):
         found = False
         for i, w in enumerate(self._widgets):
@@ -81,6 +84,10 @@ class QLayout():
                 self._widgets[i][0] = new
             else:
                 self._widgets[i] = new
+    def addLayout(self, layout, *args):
+        widget = QWidget()
+        widget.setLayout(layout)
+        self.addWidget(widget, *args)
 
 class QGridLayout(QLayout):
     def __init__(self, parent=None):
@@ -155,6 +162,13 @@ class MetaQFrame(type):
     HLine = property(lambda self: 32)
     VLine = property(lambda self: 64)
 
+class _size():
+    def setHeight(self, *args): ...
+
+class _header():
+    def setSectionResizeMode(self, *args): ...
+    def hide(self): ...
+
 class QWidget():
     def __init__(self, parent=None):
         self.parent = parent
@@ -175,6 +189,8 @@ class QWidget():
         self._title = title
     def setLayout(self, layout):
         self._layout = layout
+    def layout(self):
+        return self._layout
     def _size(self):
         return {'width': 500 if 'width' not in self._style else self._style['width'],
                 'height': 300 if 'height' not in self._style else self._style['height']}
@@ -226,19 +242,31 @@ class QWidget():
         self._props.pop('disabled', None) if value else self._props.update({'disabled':1})
     def setValidator(self, validator):
         pass
+    def setMinimumWidth(self, minwidth):
+        pass
     def setMaximumWidth(self, maxwidth):
         pass
+    def maximumSize(self):
+        return _size()
     def setMaximumSize(self, maxsize):
         pass
     def setMinimumSize(self, minsize):
         pass
     def setSizePolicy(self, sizePolicy):
         pass
+    def setFixedWidth(self, width):
+        pass
+    def horizontalHeader(self):
+        return _header()
+    def verticalHeader(self):
+        return _header()
     def setAnimated(self, policy):
         pass
     def setDocumentMode(self, policy):
         pass
     def setStyleSheet(self, style):
+        pass
+    def font(self):
         pass
     def content(self, state, actions):
         return []
@@ -261,14 +289,24 @@ class QFrame(QWidget, metaclass=MetaQFrame):
         super(QFrame, self).__init__(parent)
         self._element = 'div'
 
+class _menubar():
+    def __init__(self, parent):
+        self._parent = parent
+    def addMenu(self, menu):
+        self._parent._menuitems.append(menu)
+
 class QMainWindow(QWidget):
     def __init__(self, parent=None, flags=None):
         super(QMainWindow, self).__init__(parent)
         self._element = 'div'
         self._layout = QBoxLayout()
+        self._menu = _menubar(self)
+        self._menuitems = []
     def setCentralWidget(self, widget):
         self._layout._widgets = [widget]
         widget.parent = self
+    def menuBar(self):
+        return self._menu
 
 class QPushButton(QWidget):
     def __init__(self, text='', parent=None):
@@ -307,6 +345,15 @@ class QLineEdit(QWidget):
         return efWrap
     @property
     def editingFinished(self):
+        return self._editingFinished
+    @property
+    def returnPressed(self):
+        return self._editingFinished
+    @property
+    def textEdited(self):
+        return self._editingFinished
+    @property
+    def textChanged(self):
         return self._editingFinished
 
 class QComboBoxActivatedProxy():
@@ -371,6 +418,10 @@ class QComboBox(QWidget):
     @property
     def currentTextChanged(self):
         return self._currentChangedproxy
+    def setCurrentIndex(self, index):
+        self._text = self._items[index]
+    def itemText(self, index):
+        return self._items[index]
 
 class QTabWidget(QWidget):
     def __init__(self, parent=None):
@@ -398,6 +449,10 @@ class QTabWidget(QWidget):
         return self._currentChanged
     def content(self, state, actions):
         return [w.h(state, actions) for w in self._tabs if w.isVisible()]
+    def setTabEnabled(self, tabID, enabled):
+        pass
+    def isTabEnabled(self, tabID):
+        return True
 
 class QStackedWidget(QWidget):
     def __init__(self, parent=None):
@@ -429,10 +484,14 @@ class QCheckBox(QWidget):
         self._props = {'label':'_text', 'checked':'_checked'}
         self._actions['onchange'] = self._stateChangedWrapper(lambda v:[])
         self._stateChanged = EventProxy(self, 'onchange', self._stateChangedWrapper)
+    def setChecked(self, checked):
+        self._checked = checked
     def setCheckState(self, state):
         self._checked = state
     def isChecked(self):
         return self._checked
+    def toggle(self):
+        self._checked = not self._checked
     def _stateChangedWrapper(self, fn):
         def stateWrap(event, value):
             self._checked = value
@@ -507,18 +566,57 @@ class QMenu(QWidget):
     def __init__(self, parent=None):
         super(QMenu, self).__init__(parent)
 
-class QSpacerItem(QWidget):
-    def __init__(self, parent=None):
-        super(QSpacerItem, self).__init__(parent)
+class QSpacerItem():
+    def __init__(self, *args):
+        pass
 
 class QTextEdit(QWidget):
     def __init__(self, parent=None):
         super(QTextEdit, self).__init__(parent)
+    def setReadOnly(self, value):
+        pass
 
-"""
 class QAction(QWidget):
+    def __init__(self, name, parent=None, checkable=False):
+        super(QAction, self).__init__(parent)
+        self._name = name
+        self._triggered = EventProxy(self, 'onclick', self._triggeredWrapper)
+    def _triggeredWrapper(self, fn):
+        def wrap(event):
+            fn()
+    @property
+    def triggered(self):
+        return self._triggered
+    def isChecked(self):
+        return False
+
+class QMenu(QWidget):
+    def __init__(self, name, parent=None):
+        self._name = name
+        self._menuactions = []
+        #self._element = osjsGui.MenubarItem
+    def addAction(self, action):
+        self._menuactions.append(action)
+
+class QSPMeta(type):
+    Preferred = property(lambda self: 'preferred')
+    Fixed = property(lambda self: 'fixed')
+
+class QSizePolicy(metaclass=QSPMeta):
+    def __init__(self, *args):
+        pass
 
 class QTableView(QWidget):
+    def __init__(self, *args):
+        super(QTableView, self).__init__()
+    def setModel(self, *args): ...
+    def update(self): ...
+
 class QHeaderView(QWidget):
+    Stretch = property(lambda self: 'stretch')
+    def __init__(self, *args):
+        super(QHeaderView, self).__init__()
+
 class QProgressDialog(QWidget):
-"""
+    def __init__(self, *args):
+        super(QProgressDialog, self).__init__()

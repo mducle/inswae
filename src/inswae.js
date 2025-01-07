@@ -95,7 +95,7 @@ async function init_python() {
   // Copies files in the overrides folder to Python site-packages folder
   await window.pyodide.loadPackage("python-overrides.whl");
   // Loads Python wheels
-  for (const pkg of ["numpy", "matplotlib"]) {//, "scipy"]) {
+  for (const pkg of ["numpy", "pyyaml", "matplotlib"]) {//, "scipy"]) {
     await window.pyodide.loadPackage(pkg);
   }
   document.getElementById("loading_spinner").remove();
@@ -106,7 +106,9 @@ async function init_python() {
   fs.writeFile('/home/pyodide/.desktop/.shortcuts.json', '[' +
      shortobj + '"icon": "apps/QECoverage/qecoverage.png", "path": "apps:/QECoverage", "filename": "QECoverage" }, ' +
      shortobj + '"icon": "apps/TofConverter/tofconverter.png", "path": "apps:/TofConverter", "filename": "TofConverter" }, ' +
-     shortobj + '"icon": "apps/SampleTransmission/icon.png", "path": "apps:/SampleTransmission", "filename": "SampleTransmission" }'
+     shortobj + '"icon": "apps/SampleTransmission/icon.png", "path": "apps:/SampleTransmission", "filename": "SampleTransmission" }, ' +
+     shortobj + '"icon": "apps/PyChop/icon.png", "path": "apps:/PyChop", "filename": "PyChop" }, ' +
+     shortobj + '"icon": "apps/DGSPlanner/icon.png", "path": "apps:/DGSPlanner", "filename": "DGSPlanner" }'
   +']');
   window.osjs.make('osjs/settings').set('osjs/desktop', 'iconview.enabled', true).save()
 /*
@@ -134,7 +136,7 @@ async function init_python() {
   pkg.register("Exm", exm);
   console.log(pkg.getPackages());
   pkg.launch('Exm');
-*/
+
   window.pyodide.runPython(`
     from mantid.simpleapi import CalculateSampleTransmission
     transmission_ws = CalculateSampleTransmission(
@@ -145,6 +147,7 @@ async function init_python() {
         thickness=0.1,
     )
   `);
+*/
 };
 
 // We need Pyodide to be loaded first before initialising OS.js as we

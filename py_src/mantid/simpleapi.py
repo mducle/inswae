@@ -22,3 +22,6 @@ def CalculateSampleTransmission(*args, **kwargs):
     from .algorithms import CalculateSampleTransmission as this_alg
     alg_instance = this_alg()
     return alg_instance(*args, **kwargs)
+
+def LoadEventNexus(*args, **kwargs):
+    pass

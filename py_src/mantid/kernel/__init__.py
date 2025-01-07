@@ -29,3 +29,33 @@ class StringListValidator():
 
 class StringMandatoryValidator():
     pass
+
+class UnitConversion():
+    def run(self, *args):
+        pass
+
+class Elastic():
+    pass
+
+class UnitParametersMap():
+    pass
+
+class Quat():
+    def __init__(self, *args):
+        pass
+    def __getitem__(self, index):
+        return 1.0
+    def __mul__(self, other):
+        return self
+    def __rmul__(self, other):
+        return self
+
+class V3D():
+    def __init__(self, v1, v2, v3):
+        pass
+    def norm(self):
+        return 1.0
+    def __mul__(self, other):
+        return self
+    def __rmul__(self, other):
+        return self

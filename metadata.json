@@ -169,5 +169,27 @@
     "files": [
       "main.js"
     ]
+  },
+  {
+    "name": "PyChop",
+    "type": "application",
+    "category": "science",
+    "icon": "icon.png",
+    "title": { "en_EN": "PyChop" },
+    "description": { "en_EN": "Calculates the resolution of a chopper spectrometer" },
+    "files": [
+      "main.js"
+    ]
+  },
+  {
+    "name": "DGSPlanner",
+    "type": "application",
+    "category": "science",
+    "icon": "icon.png",
+    "title": { "en_EN": "DGSPlanner" },
+    "description": { "en_EN": "Direct Geometry Spectrometer Single Crystal Planner" },
+    "files": [
+      "main.js"
+    ]
   }
 ]
