@@ -1,0 +1,195 @@
+[
+  {
+    "name": "FileManager",
+    "category": "utilities",
+    "icon": "https://cdn.jsdelivr.net/npm/@osjs/filemanager-application@1.6.3/dist/icon.png",
+    "title": {
+      "en_EN": "File Manager",
+      "nb_NO": "Filbehandler",
+      "fr_FR": "Gestionnaire de fichiers",
+      "de_DE": "Dateimanager",
+      "vi_VN": "Quản lý tập tin",
+      "pt_BR": "Gerenciador de arquivos"
+    },
+    "description": {
+      "en_EN": "File Manager",
+      "nb_NO": "Behandle filer",
+      "fr_FR": "Gestionnaire de fichiers",
+      "de_DE": "Dateimanager",
+      "vi_VN": "Ứng dụng quản lý tập tin",
+      "pt_BR": "Gerenciador de arquivos"
+    },
+    "files": [
+      "https://cdn.jsdelivr.net/npm/@osjs/filemanager-application@1.6.3/dist/main.js",
+      "https://cdn.jsdelivr.net/npm/@osjs/filemanager-application@1.6.3/dist/main.css"
+    ]
+  },
+  {
+    "name": "AceEditor",
+    "category": "utilities",
+    "icon": "https://cdn.jsdelivr.net/npm/@osjs/ace-application@1.2.7/dist/icon.png",
+    "title": {
+      "en_EN": "Ace Editor",
+      "nb_NO": "Ace Editor",
+      "fr_FR": "Éditeur de texte Ace",
+      "pt_BR": "Editor Ace"
+    },
+    "description": {
+      "en_EN": "Ace Editor",
+      "nb_NO": "Ace er en teksteditor med fokus på programmering",
+      "fr_FR": "Éditeur de texte Ace",
+      "pt_BR": "Editor de texto Ace"
+    },
+    "mimes": [
+      "^text/(.*)",
+      "application/json",
+      "application/java",
+      "application/javascript",
+      "application/postscript",
+      "application/ecmascript",
+      "application/x-httpd-php-source",
+      "application/x-httpd-php",
+      "application/x-php",
+      "application/x-lua",
+      "application/x-python",
+      "application/x-python-code",
+      "application/x-python-code",
+      "application/x-java-class",
+      "application/x-javascript",
+      "application/x-lisp",
+      "application/x-bsh",
+      "application/x-sh"
+    ],
+    "files": [
+      "https://cdn.jsdelivr.net/npm/@osjs/ace-application@1.2.7/dist/main.js"
+    ]
+  },
+  {
+    "name": "GnomeIcons",
+    "type": "icons",
+    "title": {
+      "en_EN": "Gnome Icons",
+      "fr_FR": "Icônes du bureau Gnome",
+      "sl_SI": "Ikone Gnome",
+      "pt_BR": "Ícones Gnome"
+    },
+    "description": {
+      "en_EN": "Gnome Icons",
+      "fr_FR": "Icônes du bureau Gnome",
+      "sl_SI": "Ikone Gnome",
+      "pt_BR": "Ícones Gnome"
+    },
+    "files": [
+      "main.css"
+    ]
+  },
+  {
+    "name": "Settings",
+    "type": "application",
+    "category": "utilities",
+    "singleton": true,
+    "server": null,
+    "title": {
+      "en_EN": "Settings",
+      "nb_NO": "Instillinger",
+      "fr_FR": "Paramètres",
+      "pt_BR": "Configurações",
+      "sv_SE": "Inställningar"
+    },
+    "description": {
+      "en_EN": "Application to configure OS.js",
+      "nb_NO": "Applikasjon for å konfigurere OS.js",
+      "fr_FR": "Paramètres",
+      "pt_BR": "Aplicativo para configurar seu ambiente no OS.js",
+      "sv_SE": "Program för att konfigurera OS.js"
+    },
+    "files": [
+      "https://cdn.jsdelivr.net/npm/@osjs/settings-application@1.2.0/dist/main.js"
+    ]
+  },
+  {
+    "type": "theme",
+    "name": "StandardTheme",
+    "title": { "en_EN": "Standard Theme" },
+    "description": { "en_EN": "Standard Theme" },
+    "files": [
+      "https://cdn.jsdelivr.net/npm/@osjs/standard-theme@4.0.9/dist/main.js",
+      "https://cdn.jsdelivr.net/npm/@osjs/standard-theme@4.0.9/dist/main.css"
+    ]
+  },
+  {
+    "type": "theme",
+    "name": "StandardDarkTheme",
+    "title": { "en_EN": "Standard Dark Theme" },
+    "description": { "en_EN": "Standard Dark Theme" },
+    "files": [
+      "https://cdn.jsdelivr.net/npm/@osjs/standard-dark-theme@4.0.11/dist/main.js",
+      "https://cdn.jsdelivr.net/npm/@osjs/standard-dark-theme@4.0.11/dist/main.css"
+    ]
+  },
+  {
+    "type": "theme",
+    "name": "Windows8Theme",
+    "title": { "en_EN": "Windows 8 Theme" },
+    "description": { "en_EN": "Windows 8 Theme" },
+    "files": [
+      "https://cdn.jsdelivr.net/npm/@osjs/windows8-theme@4.0.6/dist/main.js",
+      "https://cdn.jsdelivr.net/npm/@osjs/windows8-theme@4.0.6/dist/main.css"
+    ]
+  },
+  {
+    "name": "QECoverage",
+    "type": "application",
+    "category": "science",
+    "icon": "qecoverage.png",
+    "title": { "en_EN": "Q-E Coverage" },
+    "description": { "en_EN": "Calculates Q-E kinematic trajectory limits" },
+    "files": [
+      "main.js"
+    ]
+  },
+  {
+    "name": "TofConverter",
+    "type": "application",
+    "category": "science",
+    "icon": "tofconverter.png",
+    "title": { "en_EN": "ToF Converter" },
+    "description": { "en_EN": "Converts between different neutron scattering units" },
+    "files": [
+      "main.js"
+    ]
+  },
+  {
+    "name": "SampleTransmission",
+    "type": "application",
+    "category": "science",
+    "icon": "icon.png",
+    "title": { "en_EN": "Sample Transmission Calculator" },
+    "description": { "en_EN": "Calculates the neutron transmission through a sample" },
+    "files": [
+      "main.js"
+    ]
+  },
+  {
+    "name": "PyChop",
+    "type": "application",
+    "category": "science",
+    "icon": "icon.png",
+    "title": { "en_EN": "PyChop" },
+    "description": { "en_EN": "Calculates the resolution of a chopper spectrometer" },
+    "files": [
+      "main.js"
+    ]
+  },
+  {
+    "name": "DGSPlanner",
+    "type": "application",
+    "category": "science",
+    "icon": "icon.png",
+    "title": { "en_EN": "DGSPlanner" },
+    "description": { "en_EN": "Direct Geometry Spectrometer Single Crystal Planner" },
+    "files": [
+      "main.js"
+    ]
+  }
+]
