@@ -15,3 +15,11 @@ def createTofConverter():
     reducer.show()
     return app.exec()
     
+def createSampleTransmission():
+    from qtpy.QtWidgets import QApplication
+    from mantidqtinterfaces.SampleTransmissionCalculator import stc_gui
+    app = QApplication([])
+    planner = stc_gui.SampleTransmissionCalculator(None, None)
+    planner._style = {'width':1000, 'height':750}
+    planner.show()
+    return app.exec()

@@ -1,12 +1,20 @@
 import xmltodict
 import json
 import os.path
-import warnings
 from qtpy import QtWidgets
+
+try:
+    import js
+except ModuleNotFoundError:
+    from warnings import warn
+else:
+    def warn(msg):
+        js.console.warn(msg)
 
 _standardtypes = {'string':lambda x: x if isinstance(x, str) else '',
                   'bool':lambda x: True if 'true' in x else False,
                   'number':lambda x:float(x),
+                  'double':lambda x:float(x),
                   'enum':lambda x:x}
 
 def _gridlayoutargs(itm):
@@ -21,7 +29,7 @@ def _loadProp(obj, props):
         try:
             setmethod = getattr(obj, 'set' + pv[0][1][0].upper() + pv[0][1][1:])
         except AttributeError:
-            warnings.warn(f'Could not set property {pv[0][1]}')
+            warn(f'Could not set property {pv[0][1]} of object {type(obj)}')
             continue
         typestr = pv[1][0]
         val = pv[1][1]
@@ -30,17 +38,17 @@ def _loadProp(obj, props):
         elif typestr == 'rect':
             setmethod(int(val['x']), int(val['y']), int(val['width']), int(val['height']))
         else:  # Type is a Q{typestr} e.g. QSizePolicy [ignore for now]
-            pass
+            warn(f'Unhandled type {typestr} with value {val} in method {setmethod}')
 
 def _addChildren(parentbase, childs, adder, argsfun=lambda x:[]):
     for itm in childs if isinstance(childs, list) else [childs]:
         if 'widget' in itm.keys() and '@class' in itm['widget'].keys():
             adder(_processWidget(parentbase, itm['widget']), *argsfun(itm))
         elif '@class' in itm.keys():
-            adder(_processWidget(parentbase, itm))
+            adder(_processWidget(parentbase, itm), *argsfun(itm))
         elif 'layout' in itm.keys():
             widget = QtWidgets.QWidget()
-            adder(widget)
+            adder(widget, *argsfun(itm))
             _popLayout(parentbase, widget, itm['layout'])
 
 def _popLayout(parentbase, instance, widget):
@@ -55,7 +63,7 @@ def _processWidget(parentbase, widget, instance=None):
     try:
         classcon = getattr(QtWidgets, widget['@class'])
     except AttributeError:
-        warnings.warn(f'Could not construct widget with class < {widget["@class"]} >')
+        warn(f'Could not construct widget with class < {widget["@class"]} >')
         return QtWidgets.QWidget()
     if instance is None:
         instance = classcon()
@@ -67,7 +75,7 @@ def _processWidget(parentbase, widget, instance=None):
         _loadProp(instance, widget['property'])
     if 'layout' in widget.keys():
         _popLayout(parentbase, instance, widget['layout'])
-    elif widget['@class'] == 'QComboBox':
+    if widget['@class'] == 'QComboBox':
         if 'item' in widget.keys():
             for itm in [v['property']['string'] for v in widget['item']]:
                 instance.addItem(itm)
@@ -80,7 +88,8 @@ def _processWidget(parentbase, widget, instance=None):
             instance.setHeaderLabels(cols)
     return instance
     
-def _create_instance(basewidget, baseinstance):
+def _create_instance(uidict, baseinstance):
+    basewidget = uidict['widget']
     _processWidget(baseinstance, basewidget, baseinstance)
     if 'layout' not in basewidget:
         if isinstance(basewidget['widget'], list):
@@ -93,10 +102,14 @@ def _create_instance(basewidget, baseinstance):
             w0 = basewidget['widget']
         centralwidget = _processWidget(baseinstance, w0)
         baseinstance.setCentralWidget(centralwidget)
+    if 'connections' in uidict and uidict['connections'] and 'connection' in uidict['connections']:
+        cons = uidict['connections']['connection']
+        for cn in (cons if isinstance(cons, list) else [cons]):
+            sig, slot = (cn[k].split('(')[0] for k in ['signal', 'slot'])
+            getattr(getattr(baseinstance, cn['sender']), sig).connect(getattr(getattr(baseinstance, cn['receiver']), slot))
 
 class _UILoader():
     def __init__(self, uifile, baseinstance=None, noinstance=False):
-        print('Own!')
         with open(uifile, 'r') as f:
             self.uidict = xmltodict.parse(f.read())
         clsname = self.uidict['ui']['class'] if 'class' in self.uidict['ui'].keys() else 'customWidget'
@@ -106,18 +119,18 @@ class _UILoader():
             def initfun(this, *args, **kwargs):
                 this.uidict = self.uidict
             def setUi(this, win):
-                _create_instance(this.uidict['ui']['widget'], win)
+                _create_instance(self.uidict['ui'], win)
             self.classtype = type(clsname, (), {'__init__':initfun, 'setupUi':setUi})
             def superinitfun(this, *args, **kwargs):
                 classcon.__init__(this, *args, **kwargs)
                 this.uidict = self.uidict
-                _create_instance(this.uidict['ui']['widget'], this)
+                _create_instance(this.uidict['ui'], this)
             self.superclasstype = type(clsname, (classcon,), {'__init__':superinitfun})
             if QtWidgets.QApplication.instance() is not None:
                 self.baseinstance = self.superclasstype()
         else:
             assert isinstance(baseinstance, classcon)
-            _create_instance(self.uidict['ui']['widget'], self.baseinstance)
+            _create_instance(self.uidict['ui'], self.baseinstance)
 
 def loadUi(uifile, baseinstance=None, workingDirectory=None):
     if workingDirectory is not None:

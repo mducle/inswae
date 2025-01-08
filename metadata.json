@@ -158,5 +158,16 @@
     "files": [
       "main.js"
     ]
+  },
+  {
+    "name": "SampleTransmission",
+    "type": "application",
+    "category": "science",
+    "icon": "icon.png",
+    "title": { "en_EN": "Sample Transmission Calculator" },
+    "description": { "en_EN": "Calculates the neutron transmission through a sample" },
+    "files": [
+      "main.js"
+    ]
   }
 ]

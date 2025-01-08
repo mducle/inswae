@@ -1,4 +1,4 @@
-const targz = require('targz');
+const admzip = require("adm-zip");
 const { unlinkSync } = require('node:fs');
 
 module.exports = {
@@ -8,12 +8,13 @@ module.exports = {
       match: ["py_src/**/*.py"],
       fn: (event, file) => {
         try {
-          unlinkSync("python-overrides.tgz");
+          unlinkSync("python-overrides.whl");
         } catch (err) {
           console.log(err)
         }
-        targz.compress({src:"py_src", dest:"python-overrides.tgz"});
-        setTimeout(() => {}, 1000); // Sleep 1s
+        const zip = new admzip();
+        zip.addLocalFolder("py_src", ".");
+        zip.writeZip("python-overrides.whl");
       }
     }
   ]
