@@ -8,6 +8,8 @@ set(SRC_FILES
     src/MaterialBuilder.cpp
     src/NeutronAtom.cpp
     src/SingletonHolder.cpp
+    src/StringTokenizer.cpp
+    src/ThreadSafeLogStream.cpp
 )
 
 add_library(Kernel OBJECT ${SRC_FILES})

@@ -31,6 +31,7 @@ endif()
 
 find_package(pybind11 CONFIG)
 find_package(Boost)
+find_package(Poco REQUIRED Foundation)
 
 # Add the Pybind11 bindings
 pybind11_add_module(${LIBMANTID_PYTHON_MODULE} MODULE)
@@ -44,4 +45,4 @@ set(LIBMANTID_PYTHON_SOURCES
     mantid/kernel_bind.cpp
 )
 target_sources(${LIBMANTID_PYTHON_MODULE} PRIVATE ${LIBMANTID_PYTHON_SOURCES})
-target_link_libraries(${LIBMANTID_PYTHON_MODULE} PUBLIC ${LIBMANTID_CXX_LIBRARIES})
+target_link_libraries(${LIBMANTID_PYTHON_MODULE} PUBLIC ${LIBMANTID_CXX_LIBRARIES} Poco::Foundation)
