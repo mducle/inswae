@@ -33,6 +33,16 @@ find_package(pybind11 CONFIG)
 find_package(Boost)
 find_package(Poco REQUIRED Foundation)
 
+if (EMSCRIPTEN)
+    # We can't use the provided Poco::Foundation label as it uses dynamic linking
+    file(GLOB POCOLIB ${Poco_DIR}/../../libPocoFoundation.a)
+    if (NOT POCOLIB)
+        message(FATAL_ERROR "libPocoFoundation.a not found - please build and install Poco")
+    endif()
+else()
+    set(POCOLIB "Poco::Foundation")
+endif()
+
 # Add the Pybind11 bindings
 pybind11_add_module(${LIBMANTID_PYTHON_MODULE} MODULE)
 target_include_directories(${LIBMANTID_PYTHON_MODULE} PUBLIC ${Boost_INCLUDE_DIRS} ${pybind11_INCLUDE_DIRS})
@@ -42,7 +52,7 @@ add_subdirectory(mantid)
 
 set(LIBMANTID_PYTHON_SOURCES
     libmantid.cpp   # This must be first
-    mantid/kernel_bind.cpp
+    ${LIBMANTID_KERNEL_BINDINGS}
 )
 target_sources(${LIBMANTID_PYTHON_MODULE} PRIVATE ${LIBMANTID_PYTHON_SOURCES})
-target_link_libraries(${LIBMANTID_PYTHON_MODULE} PUBLIC ${LIBMANTID_CXX_LIBRARIES} Poco::Foundation)
+target_link_libraries(${LIBMANTID_PYTHON_MODULE} PUBLIC ${LIBMANTID_CXX_LIBRARIES} ${POCOLIB})
