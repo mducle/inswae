@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.15)
-project(libMantid)
+project(micromantid)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 set(CMAKE_MACOSX_RPATH TRUE)
@@ -8,7 +8,7 @@ set(CXX_STANDARD_REQUIRED 20)
 cmake_policy(SET CMP0167 NEW)
 cmake_policy(SET CMP0148 OLD)  # New policy gives error when cannot find shared libs
 
-set(LIBMANTID_PYTHON_MODULE libmantid)
+set(MICROMANTID_PYTHON_MODULE micromantid)
 
 if (DEFINED ENV{CONDA_PREFIX})
     message(STATUS "Searching $ENV{CONDA_PREFIX} for Pybind11 and Boost")
@@ -44,15 +44,18 @@ else()
 endif()
 
 # Add the Pybind11 bindings
-pybind11_add_module(${LIBMANTID_PYTHON_MODULE} MODULE)
-target_include_directories(${LIBMANTID_PYTHON_MODULE} PUBLIC ${Boost_INCLUDE_DIRS} ${pybind11_INCLUDE_DIRS})
+pybind11_add_module(${MICROMANTID_PYTHON_MODULE} MODULE)
+target_include_directories(${MICROMANTID_PYTHON_MODULE} PUBLIC ${Boost_INCLUDE_DIRS} ${pybind11_INCLUDE_DIRS})
 
 # Add the raw Mantid source files
 add_subdirectory(mantid)
 
-set(LIBMANTID_PYTHON_SOURCES
-    libmantid.cpp   # This must be first
-    ${LIBMANTID_KERNEL_BINDINGS}
+set(MICROMANTID_PYTHON_SOURCES
+    micromantid.cpp   # This must be first
+    ${MICROMANTID_KERNEL_BINDINGS}
 )
-target_sources(${LIBMANTID_PYTHON_MODULE} PRIVATE ${LIBMANTID_PYTHON_SOURCES})
-target_link_libraries(${LIBMANTID_PYTHON_MODULE} PUBLIC ${LIBMANTID_CXX_LIBRARIES} ${POCOLIB})
+target_sources(${MICROMANTID_PYTHON_MODULE} PRIVATE ${MICROMANTID_PYTHON_SOURCES})
+target_link_libraries(${MICROMANTID_PYTHON_MODULE} PUBLIC ${MICROMANTID_CXX_LIBRARIES} ${POCOLIB})
+
+# Destination name must match name of project in pyproject.toml
+install(TARGETS ${MICROMANTID_PYTHON_MODULE} DESTINATION ${MICROMANTID_PYTHON_MODULE})

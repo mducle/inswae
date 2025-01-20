@@ -1,0 +1,31 @@
+[build-system]
+requires = ["scikit-build-core>=0.10", "pybind11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "micromantid"
+version = "0.0.1"
+description = "A reduced subset of Mantid targeted at web-browsers"
+readme = "README.md"
+authors = [
+  { name = "Duc Le", email = "duc.le@stfc.ac.uk" },
+]
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Physics"
+]
+
+[project.urls]
+Repository = "https://github.com/mducle/micromantid"
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[tool.scikit-build.cmake.define]
+CMAKE_CXX_FLAGS_RELEASE = "-O2 -DNDEBUG"

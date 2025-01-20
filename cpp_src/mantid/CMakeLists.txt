@@ -1,12 +1,12 @@
 add_subdirectory(Kernel)
 
-target_include_directories(${LIBMANTID_PYTHON_MODULE} PUBLIC Kernel/inc Types/inc)
+target_include_directories(${MICROMANTID_PYTHON_MODULE} PUBLIC Kernel/inc Types/inc)
 
-set(LIBMANTID_CXX_LIBRARIES
+set(MICROMANTID_CXX_LIBRARIES
     Kernel
 CACHE INTERNAL "")
 
-set(LIBMANTID_KERNEL_BINDINGS
+set(MICROMANTID_KERNEL_BINDINGS
     mantid/kernel_bind.cpp
     mantid/Kernel/bindings/Material.cpp
     mantid/Kernel/bindings/MaterialBuilder.cpp
