@@ -29,3 +29,8 @@ test = ["pytest"]
 
 [tool.scikit-build.cmake.define]
 CMAKE_CXX_FLAGS_RELEASE = "-O2 -DNDEBUG"
+
+[tool.scikit-build]
+cmake.args = ["-G Unix Makefiles"]
+#build.verbose = true
+#logging.level = "INFO"

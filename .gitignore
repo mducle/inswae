@@ -6,3 +6,4 @@ python-overrides.whl
 *.swo
 *-v0
 __pycache__
+.pyodide-xbuildenv
