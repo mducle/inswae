@@ -1,0 +1,1 @@
+from micromantid.kernel.plugins import *

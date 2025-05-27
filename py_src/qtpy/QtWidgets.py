@@ -81,6 +81,7 @@ class QLayout():
                 self._widgets[i][0] = new
             else:
                 self._widgets[i] = new
+            new.parent = self
 
 class QGridLayout(QLayout):
     def __init__(self, parent=None):
@@ -489,10 +490,27 @@ class QTreeWidget(QWidget):
     def __init__(self, parent=None):
         super(QTreeWidget, self).__init__(parent)
         self._element = 'div'
+        self._toplevelitems = []
     def setColumnCount(self, ncols):
         self._ncols = ncols
     def setHeaderLabels(self, cols):
         self._headers = cols
+    def addTopLevelItem(self, item):
+        self._toplevelitems.append(item)
+
+class QTreeWidgetItem(QWidget):
+    def __init__(self, parent=None):
+        super(QTreeWidgetItem, self).__init__(parent)
+        self._element = 'div'
+        self._parent = parent
+        self._isExpanded = False
+        self._children = []
+    def setText(self, column, text):
+        self._text = text
+    def setExpanded(self, value):
+        self._isExpanded = value
+    def addChild(self, child):
+        self._children.append(child)
 
 # Widgets needed for PyChop
 class QDialog(QWidget):

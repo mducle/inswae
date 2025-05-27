@@ -18,7 +18,7 @@ class SampleTransmissionCalculatorView(QtWidgets.QWidget, Ui_sample_transmission
         self.setupUi(self)
         fig = Figure()
         #fig.set_layout_engine(layout="tight")
-        fig.set_tight_layout(True)
+        #fig.set_tight_layout(True)
         self.axes = fig.add_subplot(111)
         self.plot_frame = FigureCanvas(fig)
         self.axes.set_xlabel("Wavelength (Å)")
@@ -87,7 +87,7 @@ class SampleTransmissionCalculatorView(QtWidgets.QWidget, Ui_sample_transmission
         self.axes.plot(x, y)
         self.axes.set_xlabel("Wavelength (Å)")
         self.axes.set_ylabel("Transmission (%)")
-        self.plot_frame.figure.tight_layout()
+        #self.plot_frame.figure.tight_layout()
         self.plot_frame.draw()
 
     def set_validation_label(self, warning_text=""):

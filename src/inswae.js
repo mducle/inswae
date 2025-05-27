@@ -6,7 +6,7 @@ import htm from 'https://esm.sh/htm'
 const html = htm.bind(Preact.h)
 import "https://cdn.plot.ly/plotly-2.27.0.min.js";
 */
-import "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js";
+import "https://cdn.jsdelivr.net/pyodide/v0.27.1/full/pyodide.js";
 import "https://cdn.jsdelivr.net/npm/@osjs/gui/dist/main.js";
 import "https://cdn.jsdelivr.net/npm/@osjs/client/dist/main.js";
 import "https://cdn.jsdelivr.net/npm/@osjs/panels/dist/main.js";
@@ -92,8 +92,10 @@ async function init_python() {
   window.pyodide.registerJsModule("hyperapp", {h:h, text:text, app:app});
   window.pyodide.registerJsModule("jswidgets", jswidgets);
   const fs = window.pyodide.FS;
+  // Installs mantid
+  await window.pyodide.loadPackage("micromantid-0.0.1-cp312-cp312-pyodide_2024_0_wasm32.whl");
   // Copies files in the overrides folder to Python site-packages folder
-  await window.pyodide.loadPackage("python-overrides.whl");
+  await window.pyodide.loadPackage("python-overrides-1.0.0-py2.py3-none-any.whl");
   // Loads Python wheels
   for (const pkg of ["numpy", "matplotlib"]) {//, "scipy"]) {
     await window.pyodide.loadPackage(pkg);

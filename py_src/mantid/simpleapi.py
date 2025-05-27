@@ -1,24 +1,6 @@
-class AnalysisDataService():
-    @staticmethod
-    def getObjectNames():
-        return []
-    @staticmethod
-    def retrieveWorkspaces(ws_names):
-        return []
-
-def CreateWorkspace(*args, **kwargs):
-    pass
-
-def ConvertToPointData(*args, **kwargs):
-    pass
-
-def Rebin(*args, **kwargs):
-    pass
-
-def SetSampleMaterial(*args, **kwargs):
-    pass
-
-def CalculateSampleTransmission(*args, **kwargs):
-    from .algorithms import CalculateSampleTransmission as this_alg
-    alg_instance = this_alg()
-    return alg_instance(*args, **kwargs)
+from micromantid.simpleapi import *
+from micromantid.simpleapi import _create_algorithm_function as _create_alg_fn
+def _create_algorithm_function(name, version, algm_object):
+   alg_wrapper = _create_alg_fn(name, version, algm_object)
+   globals()[name] = alg_wrapper
+   return alg_wrapper
