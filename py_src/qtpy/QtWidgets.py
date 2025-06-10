@@ -664,6 +664,19 @@ class _index():
 
 class QTableView(QWidget):
     def __init__(self, *args):
+        super(QTableView, self).__init__()
+        self._model = None
+    def setModel(self, model):
+        self._model = model
+        nr, nc = (self._model.rowCount(self), self._model.columnCount(self))
+        rowheaders, colheaders = ([], [])
+        flags = [[self._model.flags(_index(ii, jj)) for ii in range(nr)] for jj in range(nc)]
+        if hasattr(self._model, 'headerData'):
+            for ii in range(nr):
+                rowheaders.append(self._model.headerData(ii, Qt.Vertical, Qt.DisplayRole))
+            for ii in range(nc):
+                colheaders.append(self._model.headerData(ii, Qt.Horizontal, Qt.DisplayRole))
+    def update(self):
         pass
 
 class QHeaderView(QWidget):

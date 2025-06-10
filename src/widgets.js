@@ -52,6 +52,10 @@ const TextLabel = (props = {}, children = []) => {
   ]);
 };
 
+export const EditableTable = (props = {}, children = []) => {
+  
+};
+
 export const NumberSpinner = (props = {}, children = []) =>
   createField('number-spinner', props, {
     type: 'number',
