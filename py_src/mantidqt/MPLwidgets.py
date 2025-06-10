@@ -10,15 +10,18 @@ class FigureCanvas(FigureCanvasHTMLCanvas, QWidget):
         self._style = {'border':'none'}
         self._actions = {'onload':self._onloadWrapper()}
         self.toolbar = NavigationToolbar2HTMLCanvas(self)
+        self._init = False
+        self._div = js.document.getElementById(self._id + '_rootdiv')
+        if not self._div:
+            self._div = js.document.createElement('div')
+            self._div.id = self._id + '_rootdiv'
     def _onloadWrapper(self):
         def loadWrap(event):
-            self._div = js.document.getElementById(self._id + '_rootdiv')
-            if not self._div:
-                self._div = js.document.createElement('div')
-                self._div.id = self._id + '_rootdiv'
-            event.target.parentNode.append(self._div)
-            event.target.remove()
-            self.show()
+            if not self._init:
+                self._init = True
+                event.target.parentNode.append(self._div)
+                event.target.remove()
+                self.show()
         return loadWrap
     def show(self):
         # Both FigureCanvasHTMLCanvas and QWidget have show()

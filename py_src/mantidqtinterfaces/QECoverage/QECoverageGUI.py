@@ -233,7 +233,7 @@ class QECoverageGUI(QtWidgets.QWidget):
         # pylint: disable=protected-access
         self.mantidplot_name = "QE Coverage"
         # register startup
-        #mantid.UsageService.registerFeatureUsage(mantid.kernel.FeatureType.Interface, "QECoverage", False)
+        mantid.UsageService.registerFeatureUsage(mantid.kernel.FeatureType.Interface, "QECoverage", False)
 
     def onHelp(self):
         show_interface_help(self.mantidplot_name, self.assistant_process, area="utility")

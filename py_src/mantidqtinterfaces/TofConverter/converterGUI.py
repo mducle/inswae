@@ -90,12 +90,12 @@ class MainWindow(QMainWindow):
         self.input_val_dict["User specified"] = 0
         self.ui.inputWorkspace.addItems(list(self.input_val_dict.keys()))
 
-        #try:
-        #    import mantid
-        #    # register startup
-        #    mantid.UsageService.registerFeatureUsage(mantid.kernel.FeatureType.Interface, "TofConverter", False)
-        #except ImportError:
-        #    pass
+        try:
+            import mantid
+            # register startup
+            mantid.UsageService.registerFeatureUsage(mantid.kernel.FeatureType.Interface, "TofConverter", False)
+        except ImportError:
+            pass
 
     @staticmethod
     def get_all_single_value_workspaces() -> Dict[str, float]:
