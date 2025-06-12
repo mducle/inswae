@@ -37,3 +37,15 @@ def load_ui(caller_filename, ui_relfilename, baseinstance=None):
         return loadUi(filepath, baseinstance=baseinstance)
     else:
         return loadUiType(filepath)
+
+class QAppThreadCall():
+    def __init__(self, callable_, blocking): ...
+
+def force_method_calls_to_qapp_thread(instance, *, all_methods=False): ...
+
+import types, sys
+qtc_name = f'{__name__}.qappthreadcall'
+qtc_mod = types.ModuleType(qtc_name)
+qtc_mod.__dict__['QAppThreadCall'] = QAppThreadCall
+qtc_mod.__dict__['force_method_calls_to_qapp_thread'] = force_method_calls_to_qapp_thread
+sys.modules[qtc_name] = qtc_mod

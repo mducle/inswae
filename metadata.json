@@ -191,5 +191,16 @@
     "files": [
       "main.js"
     ]
+  },
+  {
+    "name": "MSlice",
+    "type": "application",
+    "category": "science",
+    "icon": "favicon.ico",
+    "title": { "en_EN": "MSlice" },
+    "description": { "en_EN": "Loads, views and rebin time-of-flight inelastic neutron scattering data" },
+    "files": [
+      "main.js"
+    ]
   }
 ]

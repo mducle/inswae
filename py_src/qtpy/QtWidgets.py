@@ -333,11 +333,16 @@ class QMainWindow(QWidget):
         self._layout = QBoxLayout()
         self._menu = _menubar(self)
         self._menuitems = []
+        self._statusbar = None
     def setCentralWidget(self, widget):
         self._layout._widgets = [widget]
         widget.parent = self
     def menuBar(self):
         return self._menu
+    def statusBar(self):
+        if self._statusbar is None:
+            self._statusbar = QStatusBar(self)
+        return self._statusbar
 
 class QPushButton(QWidget):
     def __init__(self, text='', parent=None):
@@ -722,3 +727,10 @@ class QProgressDialog(QWidget):
     def close(self): ...
     def wasCanceled(self):
         return False
+
+class QStatusBar():
+    def __init__(self, parent=None):
+        pass
+    def addPermanentWidget(self, widget):
+        pass
+    
