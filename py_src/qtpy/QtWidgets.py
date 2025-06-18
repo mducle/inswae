@@ -24,10 +24,14 @@ class EventProxy():
         self.name = name
         self.wrapper = wrapper
     def connect(self, callback):
+        def _send_wrapper(*args, **kwargs):
+            if hasattr(callback, '__self__'):
+                callback.__self__._sender = self.parent
+            callback(*args, **kwargs)
         if self.wrapper is None:
-            self.parent._actions[self.name] = callback
+            self.parent._actions[self.name] = _send_wrapper
         else:
-            self.parent._actions[self.name] = self.wrapper(callback)
+            self.parent._actions[self.name] = self.wrapper(_send_wrapper)
 
 class QApplication():
     def __init__(self, args):
@@ -40,6 +44,7 @@ class QApplication():
     def instance():
         global QAPP
         return QAPP
+    def processEvents(self): ...
     def exec(self):
         global QAPP
         QAPP = None
@@ -189,6 +194,8 @@ class QWidget():
         self._actions = {}
         self._toolTip = ''
         self._element = 'div'
+        self._validator = None
+        self._sender = None
     def setWindowFlags(self, flags):
         self._flags = flags
     def setWindowTitle(self, title):
@@ -253,7 +260,9 @@ class QWidget():
     def setEnabled(self, value):
         self._props.pop('disabled', None) if value else self._props.update({'disabled':1})
     def setValidator(self, validator):
-        pass
+        self._validator = validator
+    def validator(self):
+        return self._validator
     def setMinimumWidth(self, minwidth):
         pass
     def setMaximumWidth(self, maxwidth):
@@ -268,6 +277,8 @@ class QWidget():
         pass
     def setFixedWidth(self, width):
         pass
+    def sender(self):
+        return self._sender
     def resize(self, *args):
         pass
     def horizontalHeader(self):
@@ -659,12 +670,40 @@ class QSizePolicy(metaclass=QSPMeta):
 class _index():
     def __init__(self, r, c):
         self._r, self._c = (r, c)
-    def row(): return self._r
-    def column(): return self._r
+    def row(self): return self._r
+    def column(self): return self._c
 
 class QTableView(QWidget):
     def __init__(self, *args):
-        pass
+        super(QTableView, self).__init__(*args)
+        self._model = None
+        self._element = jswidgets.EditableTable
+        def _changeWrap(event, value=None):
+            if value:
+                self._model.setData(_index(value[0], value[1]), value[2])
+                self._props['values'][value[1]][value[0]] = value[2]
+        self._actions['onchange'] = _changeWrap
+    def setModel(self, model):
+        assert hasattr(model, '_views'), 'Invalid Model'
+        if self._model is not None:
+            self._model._views = [v for v in self._model._views if v is not self]
+        self._model = model
+        model._views.append(self)
+        nr, nc = (self._model.rowCount(self), self._model.columnCount(self))
+        rowheaders, colheaders = ([], [])
+        flags = [[self._model.flags(_index(ii, jj)) for ii in range(nr)] for jj in range(nc)]
+        editable = [[(fc & Qt.ItemIsEditable) != 0 for fc in fr] for fr in flags]
+        if hasattr(self._model, 'headerData'):
+            for ii in range(nr):
+                rowheaders.append(self._model.headerData(ii, Qt.Vertical, Qt.DisplayRole))
+            for ii in range(nc):
+                colheaders.append(self._model.headerData(ii, Qt.Horizontal, Qt.DisplayRole))
+        data = [[self._model.data(_index(ii, jj), Qt.DisplayRole) for ii in range(nr)] for jj in range(nc)]
+        self._props = {'nr':nr, 'nc':nc, 'row_titles':rowheaders, 'col_titles':colheaders, 
+                       'editable':editable, 'values':data, 'onchange':create_proxy(self._actions['onchange'])}
+    def update(self):
+        nr, nc = (self._props['nr'], self._props['nc'])
+        self._props['values'] = [[self._model.data(_index(ii, jj), Qt.DisplayRole) for ii in range(nr)] for jj in range(nc)]
 
 class QHeaderView(QWidget):
     Stretch = property(lambda self: 'stretch')
@@ -674,3 +713,12 @@ class QHeaderView(QWidget):
 class QProgressDialog(QWidget):
     def __init__(self, *args):
         super(QProgressDialog, self).__init__()
+    def setMinimumDuration(self, duration): ...
+    def setCancelButtonText(self, canceltxt): ...
+    def setRange(self, range_min, range_max): ...
+    def setValue(self, value): ...
+    def setLabelText(self, text): ...
+    def setWindowTitle(self, title): ...
+    def close(self): ...
+    def wasCanceled(self):
+        return False

@@ -180,5 +180,16 @@
     "files": [
       "main.js"
     ]
+  },
+  {
+    "name": "DGSPlanner",
+    "type": "application",
+    "category": "science",
+    "icon": "icon.png",
+    "title": { "en_EN": "DGSPlanner" },
+    "description": { "en_EN": "Direct Geometry Spectrometer Single Crystal Planner" },
+    "files": [
+      "main.js"
+    ]
   }
 ]

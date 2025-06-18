@@ -109,7 +109,8 @@ async function init_python() {
      shortobj + '"icon": "apps/QECoverage/qecoverage.png", "path": "apps:/QECoverage", "filename": "QECoverage" }, ' +
      shortobj + '"icon": "apps/TofConverter/tofconverter.png", "path": "apps:/TofConverter", "filename": "TofConverter" }, ' +
      shortobj + '"icon": "apps/SampleTransmission/icon.png", "path": "apps:/SampleTransmission", "filename": "SampleTransmission" }, ' +
-     shortobj + '"icon": "apps/PyChop/icon.png", "path": "apps:/PyChop", "filename": "PyChop" }'
+     shortobj + '"icon": "apps/PyChop/icon.png", "path": "apps:/PyChop", "filename": "PyChop" }, ' +
+     shortobj + '"icon": "apps/DGSPlanner/icon.png", "path": "apps:/DGSPlanner", "filename": "DGSPlanner" }'
   +']');
   window.osjs.make('osjs/settings').set('osjs/desktop', 'iconview.enabled', true).save()
 /*

@@ -33,3 +33,11 @@ def create_pychop():
     window.show()
     return app.exec()
 
+def create_dgsplanner():
+    from qtpy.QtWidgets import QApplication
+    from mantidqtinterfaces.DGSPlanner import DGSPlannerGUI
+    app = QApplication([])
+    planner = DGSPlannerGUI.DGSPlannerGUI(None, None)
+    planner._style = {'width':1350, 'height':850}
+    planner.show()
+    return app.exec()
