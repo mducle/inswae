@@ -1,10 +1,12 @@
 {
   "scripts": {
-    "prestart": "node src/zip.js py_src python-overrides-1.0.0-py2.py3-none-any.whl",
+    "prestart": "node src/get_mantid.js && node src/patch_mantid.js && node src/zip_wheel.js",
     "start": "browser-sync start --server . --files src/ --files py_src/ --single --config ./bs-config.js"
   },
   "dependencies": {
+    "adm-zip": "^0.5.16",
     "browser-sync": "^3.0.3",
-    "adm-zip": "^0.5.16"
+    "diff": "^8.0.2",
+    "node-fetch": "^2.7.0"
   }
 }

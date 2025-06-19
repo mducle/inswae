@@ -1,0 +1,210 @@
+diff -urd mantid/mantidqtinterfaces/DGSPlanner/ClassicUBInputWidget.py py_src/mantidqtinterfaces/DGSPlanner/ClassicUBInputWidget.py
+--- py_src/mantidqtinterfaces/DGSPlanner/ClassicUBInputWidget.py	2025-06-19 00:31:00.203042586 +0100
++++ py_src/mantidqtinterfaces/DGSPlanner/ClassicUBInputWidget.py	2025-06-19 00:55:08.031042672 +0100
+@@ -126,7 +126,7 @@
+         grid.addWidget(self._labelvz, 4, 4, QtCore.Qt.AlignRight)
+         grid.addWidget(self._editvz, 4, 5)
+         # update oriented lattice and gui
+-        self.updateOL(self.ol)
++        #self.updateOL(self.ol)
+ 
+         # connections
+         self._edita.textEdited.connect(self.check_state_latt)
+diff -urd mantid/mantidqtinterfaces/DGSPlanner/DGSPlannerGUI.py py_src/mantidqtinterfaces/DGSPlanner/DGSPlannerGUI.py
+--- py_src/mantidqtinterfaces/DGSPlanner/DGSPlannerGUI.py	2025-06-19 00:31:00.171042586 +0100
++++ py_src/mantidqtinterfaces/DGSPlanner/DGSPlannerGUI.py	2025-06-19 00:55:08.033042672 +0100
+@@ -139,7 +139,7 @@
+         # register startup
+         mantid.UsageService.registerFeatureUsage(mantid.kernel.FeatureType.Interface, "DGSPlanner", False)
+ 
+-    @QtCore.Slot(mantid.geometry.OrientedLattice)
++    #@QtCore.Slot(mantid.geometry.OrientedLattice)
+     def updateUB(self, ol):
+         self.ol = ol
+         self.updatedOL = True
+@@ -162,7 +162,7 @@
+             self.dimensionWidget.toggleDeltaE(not changeToElastic)
+         self.eiWavelengthUpdateEvent()
+ 
+-    @QtCore.Slot(dict)
++    #@QtCore.Slot(dict)
+     def updateParams(self, d):
+         if self.sender() is self.instrumentWidget:
+             self.updatedInstrument = True
+@@ -190,7 +190,7 @@
+                     i += 1
+                     progressDialog.setValue(i)
+                     progressDialog.setLabelText("Creating workspace %d of %d..." % (i, self.iterations))
+-                    QtWidgets.qApp.processEvents()
++                    #QtWidgets.qApp.processEvents()
+                     if progressDialog.wasCanceled():
+                         self.progress_canceled = True
+                         progressDialog.close()
+@@ -351,7 +351,7 @@
+         for i in range(self.iterations):
+             progressDialog.setValue(i)
+             progressDialog.setLabelText("Calculating orientation %d of %d..." % (i, self.iterations))
+-            QtWidgets.qApp.processEvents()
++            #QtWidgets.qApp.processEvents()
+             if progressDialog.wasCanceled():
+                 self.progress_canceled = True
+                 progressDialog.close()
+diff -urd mantid/mantidqtinterfaces/DGSPlanner/DimensionSelectorWidget.py py_src/mantidqtinterfaces/DGSPlanner/DimensionSelectorWidget.py
+--- py_src/mantidqtinterfaces/DGSPlanner/DimensionSelectorWidget.py	2025-06-19 00:31:00.244042586 +0100
++++ py_src/mantidqtinterfaces/DGSPlanner/DimensionSelectorWidget.py	2025-06-19 00:55:08.034042672 +0100
+@@ -134,7 +134,7 @@
+         self._comboDim2 = QtWidgets.QComboBox(self)
+         self._comboDim3 = QtWidgets.QComboBox(self)
+         self._comboDim4 = QtWidgets.QComboBox(self)
+-        self._comboDim4.setMinimumContentsLength(12)
++        #self._comboDim4.setMinimumContentsLength(12)
+         # basis
+         self.basis = ["1,0,0", "0,1,0", "0,0,1"]
+         # default values
+diff -urd mantid/mantidqtinterfaces/DGSPlanner/MatrixUBInputWidget.py py_src/mantidqtinterfaces/DGSPlanner/MatrixUBInputWidget.py
+--- py_src/mantidqtinterfaces/DGSPlanner/MatrixUBInputWidget.py	2025-06-19 00:30:59.557042586 +0100
++++ py_src/mantidqtinterfaces/DGSPlanner/MatrixUBInputWidget.py	2025-06-19 00:55:08.036042672 +0100
+@@ -101,8 +101,8 @@
+         self.UBmodel = UBTableModel(self.ol, self)
+         self._tableView.setModel(self.UBmodel)
+         self._tableView.update()
+-        self._tableView.setMinimumSize(self._tableView.sizeHintForColumn(0) * 6, self._tableView.sizeHintForRow(0) * 4)
+-        self._tableView.setMaximumSize(self._tableView.sizeHintForColumn(0) * 6, self._tableView.sizeHintForRow(0) * 4)
++        #self._tableView.setMinimumSize(self._tableView.sizeHintForColumn(0) * 6, self._tableView.sizeHintForRow(0) * 4)
++        #self._tableView.setMaximumSize(self._tableView.sizeHintForColumn(0) * 6, self._tableView.sizeHintForRow(0) * 4)
+         self.LoadIsawUBButton.clicked.connect(self.loadIsawUBDialog)
+         self.LoadNexusUBButton.clicked.connect(self.loadNexusUBDialog)
+         self.layout().addStretch(1)
+diff -urd mantid/mantidqtinterfaces/PyChop/PyChopGui.py py_src/mantidqtinterfaces/PyChop/PyChopGui.py
+--- py_src/mantidqtinterfaces/PyChop/PyChopGui.py	2025-06-19 00:31:00.246042586 +0100
++++ py_src/mantidqtinterfaces/PyChop/PyChopGui.py	2025-06-11 23:20:45.671628655 +0100
+@@ -164,13 +164,12 @@
+                     self.widgets[f"Chopper{idx}Phase"]["Label"].show()
+                 self.widgets[f"Chopper{idx}Phase"]["Edit"].setText(str(self.engine.chopper_system.defaultPhase[idx]))
+                 self.widgets[f"Chopper{idx}Phase"]["Label"].setText(self.engine.chopper_system.phaseNames[idx])
+-        self.setChopper(str(self.widgets["ChopperCombo"]["Combo"].currentText()))
++        self.setChopper(self.choppers[str(instname)][0])
+         val = self.flxslder.val * self.maxE[self.engine.instname] / 100
+         self.flxedt.setText("%3.2f" % (val))
+         nframe = self.engine.moderator.n_frame if hasattr(self.engine.moderator, "n_frame") else 1
+         self.repfig_nframe_edit.setText(str(nframe))
+         self.repfig_nframe_rep1only.setChecked(False)
+-        self.flux_units = self.engine.moderator.flux_units
+         if hasattr(self.engine.chopper_system, "default_frequencies"):
+             cb = [self.widgets["FrequencyCombo"]["Combo"], self.widgets["PulseRemoverCombo"]["Combo"]]
+             for idx, freq in enumerate(self.engine.chopper_system.default_frequencies):
+@@ -369,7 +368,7 @@
+                     if not self.flux[ie]:
+                         continue
+                     (line,) = self.resaxes.plot(en, self.res[ie])
+-                    label_text = "%s_%3.2fmeV_%dHz_Flux=%f%s" % (inst, Ei, freq, self.flux[ie], self.flux_units)
++                    label_text = "%s_%3.2fmeV_%dHz_Flux=%fn/cm2/s" % (inst, Ei, freq, self.flux[ie])
+                     line.set_label(label_text)
+                     if self.tabs.isTabEnabled(self.qetabID):
+                         self.plot_qe(Ei, label_text, hold=True)
+@@ -379,7 +378,7 @@
+             en = np.linspace(0, 0.95 * ei, 200)
+             (line,) = self.resaxes.plot(en, self.res)
+             chopper = self.engine.getChopper()
+-            label_text = "%s_%s_%3.2fmeV_%dHz_Flux=%f%s" % (inst, chopper, ei, freq, self.flux, self.flux_units)
++            label_text = "%s_%s_%3.2fmeV_%dHz_Flux=%fn/cm2/s" % (inst, chopper, ei, freq, self.flux)
+             line.set_label(label_text)
+             if self.tabs.isTabEnabled(self.qetabID):
+                 self.plot_qe(ei, label_text, overplot)
+@@ -472,7 +471,7 @@
+         self.flxaxes1.set_xlim([mn, mx])
+         self.flxaxes2.set_xlim([mn, mx])
+         self.flxaxes1.set_xlabel("Incident Energy (meV)")
+-        self.flxaxes1.set_ylabel("Flux (%s)" % (self.flux_units.replace("cm^2", "cm$^2$")))
++        self.flxaxes1.set_ylabel("Flux (n/cm$^2$/s)")
+         self.flxaxes1.set_xlabel("Incident Energy (meV)")
+         self.flxaxes2.set_ylabel("Elastic Resolution FWHM (meV)")
+         lg = self.flxaxes2.legend()
+@@ -531,7 +530,7 @@
+             self.frqaxes2.clear()
+         self.setFreq(manual_freq=freq0)
+         self.frqaxes1.set_xlabel("Chopper Frequency (Hz)")
+-        self.frqaxes1.set_ylabel("Flux (%s)" % (self.flux_units.replace("cm^2", "cm$^2$")))
++        self.frqaxes1.set_ylabel("Flux (n/cm$^2$/s)")
+         (line,) = self.frqaxes1.plot(freqs, flux, "o-")
+         self.frqaxes1.set_xlim([0, np.max(freqs)])
+         self.frqaxes2.set_xlabel("Chopper Frequency (Hz)")
+@@ -652,7 +651,7 @@
+             first_component = "chopper 1"
+         txt = "# ------------------------------------------------------------- #\n"
+         txt += "# Ei = %8.2f meV\n" % (ei)
+-        txt += "# Flux = %8.2f %s\n" % (flux, self.flux_units)
++        txt += "# Flux = %8.2f n/cm2/s\n" % (flux)
+         txt += "# Elastic resolution = %6.2f meV\n" % (res[0])
+         txt += "# Time width at sample = %6.2f us, of which:\n" % (1e6 * np.sqrt(tsqvan[0]))
+         for ky, val in list(tsqdic.items()):
+diff -urd mantid/mantidqtinterfaces/SampleTransmissionCalculator/stc_view.py py_src/mantidqtinterfaces/SampleTransmissionCalculator/stc_view.py
+--- py_src/mantidqtinterfaces/SampleTransmissionCalculator/stc_view.py	2025-06-19 00:30:59.511042586 +0100
++++ py_src/mantidqtinterfaces/SampleTransmissionCalculator/stc_view.py	2025-06-11 23:20:45.674628655 +0100
+@@ -17,7 +17,8 @@
+         super(SampleTransmissionCalculatorView, self).__init__(parent)
+         self.setupUi(self)
+         fig = Figure()
+-        fig.set_layout_engine(layout="tight")
++        #fig.set_layout_engine(layout="tight")
++        #fig.set_tight_layout(True)
+         self.axes = fig.add_subplot(111)
+         self.plot_frame = FigureCanvas(fig)
+         self.axes.set_xlabel("Wavelength (Å)")
+@@ -29,16 +30,16 @@
+         self.chemical_formula_err.setStyleSheet("QLabel { color : red; }")
+         self.density_err.setStyleSheet("QLabel { color : red; }")
+         self.thickness_err.setStyleSheet("QLabel { color : red; }")
+-        self.multiple_line_edit.setToolTip(
+-            "A comma separated list of first bin boundary, width, last bin boundary. \n"
+-            "Optionally this can be followed by a comma and more widths and last boundary pairs. \n"
+-            "E.g. 0,100,20000: from 0 rebin in constant size bins of 100 up to 20,000. \n"
+-            "Or 0,100,10000,200,20000: from 0 rebin in steps of 100 to 10,000 then steps of 200 to 20,000."
+-        )
++        #self.multiple_line_edit.setToolTip(
++        #    "A comma separated list of first bin boundary, width, last bin boundary. \n"
++        #    "Optionally this can be followed by a comma and more widths and last boundary pairs. \n"
++        #    "E.g. 0,100,20000: from 0 rebin in constant size bins of 100 up to 20,000. \n"
++        #    "Or 0,100,10000,200,20000: from 0 rebin in steps of 100 to 10,000 then steps of 200 to 20,000."
++        #)
+ 
+-        self.single_high_spin_box.textChanged.connect(self._double_spinbox_textChanged)
+-        self.single_low_spin_box.textChanged.connect(self._double_spinbox_textChanged)
+-        self.single_width_spin_box.textChanged.connect(self._double_spinbox_textChanged)
++        #self.single_high_spin_box.textChanged.connect(self._double_spinbox_textChanged)
++        #self.single_low_spin_box.textChanged.connect(self._double_spinbox_textChanged)
++        #self.single_width_spin_box.textChanged.connect(self._double_spinbox_textChanged)
+ 
+     def _double_spinbox_textChanged(self, text):
+         if "," in text:
+@@ -86,7 +87,7 @@
+         self.axes.plot(x, y)
+         self.axes.set_xlabel("Wavelength (Å)")
+         self.axes.set_ylabel("Transmission (%)")
+-        self.plot_frame.figure.tight_layout()
++        #self.plot_frame.figure.tight_layout()
+         self.plot_frame.draw()
+ 
+     def set_validation_label(self, warning_text=""):
+diff -urd mantid/mantidqtinterfaces/TofConverter/converterGUI.py py_src/mantidqtinterfaces/TofConverter/converterGUI.py
+--- py_src/mantidqtinterfaces/TofConverter/converterGUI.py	2025-06-19 00:30:59.509042586 +0100
++++ py_src/mantidqtinterfaces/TofConverter/converterGUI.py	2025-06-11 23:20:45.675628655 +0100
+@@ -137,7 +136,7 @@
+         # Always reset these values before conversion.
+         self.Theta = None
+         self.flightpath = None
+-        try:
++        if True:
+             if self.ui.InputVal.text() == "":
+                 raise RuntimeError("Input value is required for conversion")
+             if float(self.ui.InputVal.text()) <= 0:
+@@ -161,9 +160,3 @@
+ 
+             self.ui.convertedVal.clear()
+             self.ui.convertedVal.insert(str(self.output))
+-        except (UnboundLocalError, ArithmeticError, ValueError, RuntimeError) as err:
+-            QMessageBox.warning(self, "TofConverter", str(err))
+-            return
+-        except Exception as exc:
+-            Logger.error(exc)
+-            return

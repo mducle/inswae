@@ -5,3 +5,14 @@ python-overrides.whl
 *.swp
 *.swo
 *-v0
+__pycache__
+mantid/mantidqtinterfaces
+mantid/pychop
+mantid/mantid_instruments
+py_src/mantidqtinterfaces
+py_src/pychop
+py_src/mantid_instruments
+micromantid-*-cp312-cp312-pyodide_2024_0_wasm32.whl
+mslice-*-py2.py3-none-any.whl
+python-overrides-*-py2.py3-none-any.whl
+py_src/README.md

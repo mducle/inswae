@@ -1,0 +1,35 @@
+diff -urd mantid/pychop/Instruments.py py_src/pychop/Instruments.py
+--- py_src/pychop/Instruments.py	2025-06-19 00:38:27.460042613 +0100
++++ py_src/pychop/Instruments.py	2025-06-11 23:20:45.677628655 +0100
+@@ -14,10 +14,19 @@
+ import warnings
+ import copy
+ from . import Chop, MulpyRep
+-from scipy.interpolate import interp1d
+-from scipy.special import erf
++from math import erf
+ from scipy import constants
+-from scipy.optimize import curve_fit
++try:
++    from scipy.interpolate import interp1d
++    from scipy.optimize import curve_fit
++    has_scipy = True
++except ModuleNotFoundError:
++    def interp1d(xp, yp, **kwargs):
++        # Emulates scipy's interp1d using numpy's linear interpolation (ignore 'kind' kwargs)
++        # Note that this is only accurate to about 1% compared with scipy's spline interpolation
++        return lambda x: np.interp(x, xp, yp)
++    def curve_fit(*args, **kwargs): ...
++    has_scipy = False
+ 
+ # Some global constants
+ SIGMA2FWHM = 2 * np.sqrt(2 * np.log(2))
+@@ -1006,7 +1012,7 @@
+             except TypeError:
+                 etrans = np.asarray(etrans, dtype=float)
+         res = obj.getResolution(etrans)
+-        if return_polynomial:
++        if return_polynomial and has_scipy:
+ 
+             def cubic(x, x_0, x_1, x_2, x_3):
+                 return x_0 + x_1 * x + x_2 * x**2 + x_3 * x**3
