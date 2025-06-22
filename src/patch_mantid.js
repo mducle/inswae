@@ -20,7 +20,11 @@ fs.readdirSync(srcdir, { recursive: true }).map(
     const destfile = destdir + '/' + file;
     const subdir = path.dirname(destfile);
     if (!fs.existsSync(subdir)) {
-      fs.mkdirSync(subdir, { recursive: true });
+      try {
+        fs.mkdirSync(subdir, { recursive: true });
+      } catch {
+        fs.mkdirSync(subdir);
+      }
     }
     const patch = patches.map(
       patch => (destfile == patch.newFileName) ? patch : {}
