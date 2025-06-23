@@ -1,4 +1,5 @@
 import inspect
+import os
 
 class MetaQt(type):
     AlignLeft = property(lambda self: 'alignleft')
@@ -78,3 +79,28 @@ class QAbstractTableModel():
     @property
     def dataChanged(self):
         return self._dataChanged
+
+class QDir():
+    def __init__(self, directory):
+        self._dir = directory
+    def exists(self):
+        return os.path.exists(self._dir)
+
+class MetaQLocale(type):
+    RejectGroupSeparator = property(lambda self: 'rejectgroupseparator')
+
+class QLocale(metaclass=MetaQLocale):
+    def __init__(self, locale_string): ...
+    def setNumberOptions(self, numberoption): ...
+
+class QMutex():
+    def __init__(self): ...
+
+class QMutexLocker():
+    def __init__(self, mutex): ...
+
+class QFileInfo():
+    def __init__(self, filename):
+        self._file = filename
+    def isFile(self):
+        return os.path.isfile(self._file)

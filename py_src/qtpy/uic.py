@@ -132,10 +132,6 @@ def _processMenu(parent, widget):
                 pass
     return instance
 
-def _typedval(indict):
-    typ = [k for k in indict.keys() if k != '@name'][0]
-    return _standardtypes[typ](indict[typ])
- 
 def _create_instance(uidict, baseinstance):
     basewidget = uidict['widget']
     _processWidget(baseinstance, basewidget, baseinstance)
@@ -158,10 +154,10 @@ def _create_instance(uidict, baseinstance):
     if 'action' in basewidget.keys():
         actions = basewidget['action'] if isinstance(basewidget['action'], list) else [basewidget['action']]
         for act in actions:
-            props = act['property'] if isinstance(act['property'], list) else [act['property']]
-            props = {v['@name']:_typedval(v) for v in props}
-            setattr(baseinstance, act['@name'], QtWidgets.QAction(baseinstance, **props))
-    if menubar:
+            actionobj = QtWidgets.QAction(baseinstance)
+            _loadProp(actionobj, act['property'])
+            setattr(baseinstance, act['@name'], actionobj)
+    if menubar and hasattr(baseinstance, 'setMenuBar'):
         baseinstance.setMenuBar(_processMenu(baseinstance, menubar))
     if statusbar:
         setattr(baseinstance, statusbar['@name'], QtWidgets.QStatusBar(parent=baseinstance))

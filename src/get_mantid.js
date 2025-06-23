@@ -3,7 +3,7 @@ const fetch = require('node-fetch');
 
 const prefix = 'https://github.com/mantidproject/mantid/raw/';
 const SHA = 'a8f64cccc781eac9892433e956bab7104ebf1213';
-const inst_srcpath = 'refs/head/main/instrument';
+const inst_srcpath = 'refs/heads/main/instrument';
 const inst_destpath = 'py_src/mantid_instruments';
 const files = {
   '/qt/python/mantidqtinterfaces/': {
@@ -70,7 +70,7 @@ if(!fs.existsSync(inst_destpath)) {
   filename => {
     const outfile = inst_destpath + '/' + filename;
     if(!fs.existsSync(outfile)) {
-      const fileurl = prefix + inst_srcpath + filename;
+      const fileurl = prefix + inst_srcpath + '/' + filename;
       console.log(fileurl);
       fetch(fileurl)
         .then(response => response.text())

@@ -162,6 +162,20 @@ class QVBoxLayout(QBoxLayout):
         super(QVBoxLayout, self).__init__(parent)
         self.Direction = QBoxLayout.TopToBottom
 
+class QStackedLayout(QLayout):
+    def __init__(self, parent=None):
+        super(QStackedLayout, self).__init__(parent)
+        self._currentIndex = 0
+    def setCurrentIndex(self, index):
+        self._currentIndex = index
+    def setCurrentWidget(self, widget):
+        raise NotImplementedError('setCurrentWidget() not implemented yet')
+    @property
+    def render_function(self):
+        def createView(state, actions):
+            return self._widgets[self._currentIndex].h(state, actions)
+        return createView
+
 class MetaQFrame(type):
     Plain = property(lambda self: 1)
     Raised = property(lambda self: 2)
@@ -628,6 +642,10 @@ class QFileDialog(QWidget):
     def __init__(self, parent=None):
         super(QFileDialog, self).__init__(parent)
 
+class QInputDialog(QWidget):
+    def __init__(self, parent=None):
+        super(QInputDialog, self).__init__(parent)
+
 class QMenu(QWidget):
     def __init__(self, parent=None):
         super(QMenu, self).__init__(parent)
@@ -655,6 +673,10 @@ class QAction(QWidget):
         return self._triggered
     def isChecked(self):
         return False
+
+class QActionGroup():
+    def __init__(self, *args):
+        pass
 
 class QMenu(QWidget):
     def __init__(self, name, parent=None):
@@ -710,6 +732,18 @@ class QTableView(QWidget):
         nr, nc = (self._props['nr'], self._props['nc'])
         self._props['values'] = [[self._model.data(_index(ii, jj), Qt.DisplayRole) for ii in range(nr)] for jj in range(nc)]
 
+class QAbstractItemView():
+    def __init__(self, *args, **kwargs): ...
+
+class QTableWidget():
+    def __init__(self, *args, **kwargs): ...
+
+class QTableWidgetItem():
+    def __init__(self, *args, **kwargs): ...
+
+class QListWidgetItem():
+    def __init__(self, *args, **kwargs): ...
+
 class QHeaderView(QWidget):
     Stretch = property(lambda self: 'stretch')
     def __init__(self, *args):
@@ -734,3 +768,5 @@ class QStatusBar():
     def addPermanentWidget(self, widget):
         pass
     
+class QFileSystemModel():
+    def __init__(self, *args, **kwargs): ...
