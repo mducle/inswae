@@ -9,6 +9,8 @@ class MetaQt(type):
     AlignCenter = property(lambda self: 'aligncenter')
     AlignHCenter = property(lambda self: 'alignhcenter')
     AlignVCenter = property(lambda self: 'alignvcenter')
+    AscendingOrder = property(lambda self: 'ascendingorder')
+    DescendingOrder = property(lambda self: 'descendingorder')
     Horizontal = property(lambda self: 'horizontal')
     Vertical = property(lambda self: 'vertical')
     EditRole = property(lambda self: 'editrole')
@@ -62,7 +64,10 @@ class Signal():
             try:
                 t(*args)
             except TypeError:
-                t()
+                try:
+                    t()
+                except TypeError:
+                    t(*args)
     def connect(self, target):
         if hasattr(target, '__call__'):
             self._targets.append(target)
@@ -85,9 +90,16 @@ class QDir():
         self._dir = directory
     def exists(self):
         return os.path.exists(self._dir)
+    def absolutePath(self):
+        return os.path.abspath(self._dir)
+    def cdUp(self):
+        self._dir = os.path.join(self._dir, '..')
+    def cd(self, path):
+        self._dir = os.path.join(self._dir, path)
 
 class MetaQLocale(type):
     RejectGroupSeparator = property(lambda self: 'rejectgroupseparator')
+    C = property(lambda self: 'C')
 
 class QLocale(metaclass=MetaQLocale):
     def __init__(self, locale_string): ...

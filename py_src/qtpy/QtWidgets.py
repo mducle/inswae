@@ -10,8 +10,11 @@ from pyodide.ffi import to_js, create_proxy
 from js import Object, window
 from hyperapp import h, text, app
 import jswidgets
+from . import QtCore
 from .QtCore import Qt
 from collections import OrderedDict
+import os
+import datetime
 
 QAPP = None
 
@@ -44,7 +47,8 @@ class QApplication():
     def instance():
         global QAPP
         return QAPP
-    def processEvents(self): ...
+    @staticmethod
+    def processEvents(): ...
     def exec(self):
         global QAPP
         QAPP = None
@@ -76,8 +80,8 @@ class QLayout():
     def addWidget(self, widget, *args, **kwargs):
         self._widgets.append(widget) 
         widget.parent = self
-    def addItem(self, item):
-        pass
+    def addItem(self, item): ...
+    def sizeHint(self): ...
     def replaceWidget(self, old, new):
         found = False
         for i, w in enumerate(self._widgets):
@@ -135,8 +139,7 @@ class QBoxLayout(QLayout, metaclass=MetaQBox):
     def __init__(self, parent=None):
         super(QBoxLayout, self).__init__(parent)
         self._direction = 1
-    def addStretch(self, stretch):
-        pass
+    def addStretch(self, stretch): ...
     @property
     def Direction(self):
         return self._direction
@@ -357,6 +360,7 @@ class QMainWindow(QWidget):
         if self._statusbar is None:
             self._statusbar = QStatusBar(self)
         return self._statusbar
+    def close(self): ...
 
 class QPushButton(QWidget):
     def __init__(self, text='', parent=None):
@@ -372,6 +376,7 @@ class QPushButton(QWidget):
     @property
     def clicked(self):
         return self._clicked
+    def setMenu(self, menu): ...
 
 class QLabel(QWidget):
     def __init__(self, text='', parent=None):
@@ -408,6 +413,8 @@ class QLineEdit(QWidget):
     @property
     def textChanged(self):
         return self._editingFinished
+    def setPlaceholderText(self, txt): ...
+    def setClearButtonEnabled(self, clearbtn): ...
 
 class QComboBoxActivatedProxy():
     # To handle both the .activated.connect and .activated[str].connect syntax
@@ -475,6 +482,7 @@ class QComboBox(QWidget):
         self._text = self._items[index]
     def itemText(self, index):
         return self._items[index]
+    def blockSignals(self, blocksignal): ...
 
 class QTabWidget(QWidget):
     def __init__(self, parent=None):
@@ -491,11 +499,16 @@ class QTabWidget(QWidget):
         self._tabTitles.append(title)
     def currentIndex(self):
         return self._index
+    def setCurrentIndex(self, index):
+        self._index = index
     def _currentChangedWrapper(self, fn):
         def changeWrap(event, index, value):
             self._index = index
             self._text = value
-            fn()
+            try:
+                fn()
+            except TypeError:
+                fn(index)
         return changeWrap
     @property
     def currentChanged(self):
@@ -673,18 +686,23 @@ class QAction(QWidget):
         return self._triggered
     def isChecked(self):
         return False
+    def setChecked(self, value): ...
+    @property
+    def toggled(self):
+        return self._triggered
 
 class QActionGroup():
-    def __init__(self, *args):
-        pass
+    def __init__(self, *args): ...
+    def addAction(self, action): ...
 
 class QMenu(QWidget):
     def __init__(self, name, parent=None):
         self._name = name
         self._menuactions = []
         #self._element = osjsGui.MenubarItem
-    def addAction(self, action):
+    def addAction(self, action, extension=None):
         self._menuactions.append(action)
+    def addSeparator(self): ...
 
 class QSPMeta(type):
     Preferred = property(lambda self: 'preferred')
@@ -694,22 +712,55 @@ class QSizePolicy(metaclass=QSPMeta):
     def __init__(self, *args):
         pass
 
-class _index():
+class QModelIndex():
     def __init__(self, r, c):
         self._r, self._c = (r, c)
     def row(self): return self._r
     def column(self): return self._c
+    def sibling(self, row, column):
+        return QModelIndex(row, column)
+
+class _TableEventProxy(EventProxy):
+    def __init__(self, *args, **kwargs):
+        super(_TableEventProxy, self).__init__(*args, **kwargs)
+    def connect(self, callback):
+        super().connect(callback)
+        self.parent._props[self.name] = self.parent._actions[self.name]
 
 class QTableView(QWidget):
     def __init__(self, *args):
         super(QTableView, self).__init__(*args)
         self._model = None
         self._element = jswidgets.EditableTable
+        self._selectionmode = QAbstractItemView.SelectItems
+        self._props = {}
+        self._currsel = []
         def _changeWrap(event, value=None):
             if value:
-                self._model.setData(_index(value[0], value[1]), value[2])
+                self._model.setData(QModelIndex(value[0], value[1]), value[2])
                 self._props['values'][value[1]][value[0]] = value[2]
         self._actions['onchange'] = _changeWrap
+        def _selectedWrap(value):
+            self._currsel = [QModelIndex(v[0], v[1]) for v in value]
+        self._actions['selected'] = _selectedWrap
+        def _clickedWrapper(fn):
+            def clickWrap(event, value=None):
+                if value:
+                    fn(QModelIndex(value[0], value[1]))
+            return clickWrap
+        self._clicked = EventProxy(self, 'clicked', _clickedWrapper)
+        def _activatedWrapper(fn):
+            def activatedWrap(event, value=None):
+                if value:
+                    fn(QModelIndex(value[0], value[1]))
+            return activatedWrap
+        self._activated = EventProxy(self, 'activated', _activatedWrapper)
+    @property
+    def clicked(self):
+        return self._clicked
+    @property
+    def activated(self):
+        return self._activated
     def setModel(self, model):
         assert hasattr(model, '_views'), 'Invalid Model'
         if self._model is not None:
@@ -718,21 +769,46 @@ class QTableView(QWidget):
         model._views.append(self)
         nr, nc = (self._model.rowCount(self), self._model.columnCount(self))
         rowheaders, colheaders = ([], [])
-        flags = [[self._model.flags(_index(ii, jj)) for ii in range(nr)] for jj in range(nc)]
+        flags = [[self._model.flags(QModelIndex(ii, jj)) for ii in range(nr)] for jj in range(nc)]
         editable = [[(fc & Qt.ItemIsEditable) != 0 for fc in fr] for fr in flags]
+        selectable = [[(fc & Qt.ItemIsSelectable) != 0 for fc in fr] for fr in flags]
         if hasattr(self._model, 'headerData'):
             for ii in range(nr):
                 rowheaders.append(self._model.headerData(ii, Qt.Vertical, Qt.DisplayRole))
             for ii in range(nc):
                 colheaders.append(self._model.headerData(ii, Qt.Horizontal, Qt.DisplayRole))
-        data = [[self._model.data(_index(ii, jj), Qt.DisplayRole) for ii in range(nr)] for jj in range(nc)]
-        self._props = {'nr':nr, 'nc':nc, 'row_titles':rowheaders, 'col_titles':colheaders, 
-                       'editable':editable, 'values':data, 'onchange':create_proxy(self._actions['onchange'])}
+        data = [[self._model.data(QModelIndex(ii, jj), Qt.DisplayRole) for ii in range(nr)] for jj in range(nc)]
+        self._props.update({'nr':nr, 'nc':nc, 'row_titles':rowheaders, 'col_titles':colheaders,
+                            'editable':editable, 'values':data, 'onchange':create_proxy(self._actions['onchange']),
+                            'col_widths':['auto']*nc, 'selectable':selectable, 'sel_mode':self._selectionmode})
+    def setRootIndex(self, index):
+        self.update() # This is a hack for QFileSystemModel
+    def setColumnWidth(self, icol, width):
+        self._props['col_widths'][icol] = f'{width*2}px'
+    def setSelectionBehavior(self, value):
+        self._selectionmode = value
+        self._props['sel_mode'] = value
+    def selectionModel(self):
+        return self
+    def selectedIndexes(self):
+        return self._currsel
+    def selectedColumns(self):
+        return [QModelIndex(0, v) for v in set([ii.column() for ii in self._currsel])]
+    def selectedRows(self):
+        return [QModelIndex(v, 0) for v in set([ii.row() for ii in self._currsel])]
+    def sortByColumn(self, column, sortmode): ... # sortmode = 0 ascending; = 1 descending
     def update(self):
-        nr, nc = (self._props['nr'], self._props['nc'])
-        self._props['values'] = [[self._model.data(_index(ii, jj), Qt.DisplayRole) for ii in range(nr)] for jj in range(nc)]
+        nr, nc = (self._model.rowCount(self), self._model.columnCount(self))
+        self._props.update({'nr':nr, 'nc':nc})
+        self._props['values'] = [[self._model.data(QModelIndex(ii, jj), Qt.DisplayRole) for ii in range(nr)] for jj in range(nc)]
 
-class QAbstractItemView():
+class MetaQAbstractItemView(type):
+    SelectRows = property(lambda self: 'selectrows')
+    SelectItems = property(lambda self: 'selectitems')
+    SelectColumns = property(lambda self: 'selectcolumns')
+    ExtendedSelection = property(lambda self: 'extendedselection')
+
+class QAbstractItemView(metaclass=MetaQAbstractItemView):
     def __init__(self, *args, **kwargs): ...
 
 class QTableWidget():
@@ -763,10 +839,88 @@ class QProgressDialog(QWidget):
         return False
 
 class QStatusBar():
+    def __init__(self, parent=None): ...
+    def addPermanentWidget(self, widget): ...
+    def setStyleSheet(self, stylesheet): ...
+    def showMessage(self, stylesheet): ...
+
+class QFileSystemModel(QtCore.QAbstractTableModel):
+    def __init__(self, *args, **kwargs):
+        super(QFileSystemModel, self).__init__()
+        self._colheaders = ['Name', 'Date Modified', 'Type', 'Size']
+        self._rootpath = None
+        self._filelist = []
+    def _getfilelist(self):
+        with os.scandir(self._rootpath) as it:
+            entries = [[e, e.is_dir(follow_symlinks=False) and not e.is_file(follow_symlinks=False), e.stat()] for e in it]
+        self._filelist = []
+        for ii in sorted(enumerate([e[0].name for e in entries]), key=lambda x:x[1]):
+            datestr = str(datetime.date.fromtimestamp(entries[ii[0]][2].st_mtime))
+            typestr = 'Folder' if entries[ii[0]][1] else f'{os.path.splitext(ii[1])[1]} File'
+            self._filelist.append([ii[1], datestr, typestr, str(entries[ii[0]][2].st_size)])
+    def setRootPath(self, path):
+        self._rootpath = path
+        self._getfilelist()
+    def setNameFilters(self, filters): ...
+    def setNameFilterDisables(self, disablefilters): ...
+    def rowCount(self, parent):
+        return len(self._filelist)
+    def columnCount(self, parent):
+        return 4
+    def headerData(self, section, Qt_Orientation, role=None):
+        if role == QtCore.Qt.DisplayRole and Qt_Orientation == QtCore.Qt.Horizontal:
+            return self._colheaders[section]
+    def flags(self, dummy_index):
+        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+    def data(self, index, role):
+        row, column = (index.row(), index.column())
+        if role == QtCore.Qt.EditRole or role == QtCore.Qt.DisplayRole:
+            return self._filelist[row][column]
+    def index(self, path):
+        self.setRootPath(path)
+    def fileName(self, index):
+        return self._filelist[index.row()][index.column()]
+    def isDir(self, index):
+        return os.path.isdir(os.path.join(self._rootpath, self.fileName(index)))
+
+class QSplitter(QWidget):
+    def __init__(self, parent=None, orientation=None):
+        super(QSplitter, self).__init__()
+        if parent == Qt.Horizontal or parent == Qt.Vertical:
+            self._orientation = parent
+            self.parent = orientation
+        else:
+            self.parent = parent
+            self._orientation = orientation if orientation else Qt.Horizontal
+        self._element = 'div'
+        self._style = {'resize':self._orientation, 'overflow':'auto'}
+        self._widgets = []
+    def setOrientation(self, orientation):
+        self._orientation = orientation
+        self._style['resize'] = orientation
+    def addWidget(self, widget):
+        self._widgets.append(widget)
+    def content(self, state, actions):
+        return [w.h(state, actions) for w in self._widgets if w.isVisible()]
+
+class QListWidget(QWidget):
     def __init__(self, parent=None):
-        pass
-    def addPermanentWidget(self, widget):
-        pass
-    
-class QFileSystemModel():
-    def __init__(self, *args, **kwargs): ...
+        super(QListWidget, self).__init__(parent)
+        self._items = []
+        self._element = 'ul'
+        self._style = {'list-style-type':'none', 'display':'table-row'}
+        self._changed = EventProxy(self, 'onclick', self._changedWrapper)
+    def _changedWrapper(self, fn):
+        def wrap(event):
+            fn()
+    def addItem(self, item):
+        self._items.append(item)
+    def setSelectionMode(self, selmode): ...
+    def clearSelection(self): ...
+    @property
+    def itemSelectionChanged(self):
+        return self._changed
+    def content(self, state, actions):
+        # Might need to custom CSS class in inswae.css with focus background property
+        # https://stackoverflow.com/questions/33246967/select-item-from-unordered-list-in-html
+        return [h('li', toObj({'tabindex':'1'}), str(w)) for w in self._items if w.isVisible()]

@@ -101,6 +101,11 @@ async function init_python() {
   for (const pkg of ["numpy", "pyyaml", "matplotlib"]) {//, "scipy"]) {
     await window.pyodide.loadPackage(pkg);
   }
+  // Imports matplotlib and Mantid now to save time on initialising apps
+  window.pyodide.runPython(`
+      import matplotlib.pyplot
+      import mantid.simpleapi
+  `);
   document.getElementById("loading_spinner").remove();
   // Creates shortcuts
   if (!fs.analyzePath('/home/pyodide/.desktop').exists) { fs.mkdir('/home/pyodide/.desktop'); }

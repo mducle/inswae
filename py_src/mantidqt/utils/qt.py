@@ -39,7 +39,10 @@ def load_ui(caller_filename, ui_relfilename, baseinstance=None):
         return loadUiType(filepath)
 
 class QAppThreadCall():
-    def __init__(self, callable_, blocking): ...
+    def __init__(self, callable_, blocking=None):
+        self._callable = callable_
+    def __call__(self, *args, **kwargs):
+        self._callable(*args, **kwargs)
 
 def force_method_calls_to_qapp_thread(instance, *, all_methods=False): ...
 

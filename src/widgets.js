@@ -57,11 +57,77 @@ export const EditableTable = (props = {}, children = []) => {
   const nc = props.nc || 1;
   const row_titles = props.row_titles || "";
   const col_titles = props.col_titles || "";
+  const col_widths = props.col_widths || [['auto']];
   const editable = props.editable || [[true]];
+  const selectable = props.selectable || [[true]];
+  const select_mode = props.sel_mode || "selectitems";
   const values = props.values || [[]];
-  const styles = props.styles || {'border':'0px', 'border-collapse':'collapse'};
+  const styles = props.styles || {};
   const onchange = props.onchange || function(ev, val){};
-  const editprop = {'type':'text', 'size':'1'}
+  const onactivate = props.activated || function(ev, val){};
+  const onclicked = props.clicked || function(ev, val){};
+  const onselect = props.selected || function(val){};
+  const editprop = {'type':'text', 'size':'5'}
+  let curr_ic = 0;
+  let curr_ir = 0;
+  const oncellclick = (ev, ic, ir, isdouble) => {
+    if (ev.type == 'click' || ev.type == 'keydown') {
+      curr_ir = ir;
+      curr_ic = ic;
+    }
+    let cell = ev.target;
+    if (ev.target.tagName == 'INPUT') {
+      cell = ev.target.parentNode;
+    }
+    onclicked(ev, [curr_ir, curr_ic]);
+    if (isdouble) {
+      onactivate(ev, [curr_ir, curr_ic]);
+    }
+    const row = cell.parentNode;
+    const table = row.parentNode;
+    const i0 = table.rows[0].cells[0].tagName == 'TH' ? 1 : 0;
+    if (selectable[ic][ir]) {
+      if (ev.shiftKey === false) {
+        for (let i = 0; i < table.rows.length; i++) {
+          for (let j = 0; j < table.rows[0].cells.length; j++) {
+            table.rows[i].cells[j].style.backgroundColor = 'transparent';
+          }
+        }
+      }
+      if (select_mode == 'selectrows') {
+        for (let i = i0; i < table.rows[0].cells.length; i++) {
+          table.rows[ir+i0].cells[i].style.backgroundColor = '#AAAAAA';
+        }
+      } else if (select_mode == 'selectitems') {
+          table.rows[ir+i0].cells[ic+i0].style.backgroundColor = '#AAAAAA';
+      } else { // selectcolumns
+        for (let i = i0; i < table.rows.length; i++) {
+          table.rows[i].cells[ic+i0].style.backgroundColor = '#AAAAAA';
+        }
+      }
+    }
+    // Callback to Python code to set selection (currently highlighted cells)
+    let selected_cells = []
+    for (let i = i0; i < table.rows.length; i++) {
+      for (let j = i0; j < table.rows[0].cells.length; j++) {
+        if (table.rows[i].cells[j].style.backgroundColor != 'transparent') {
+          selected_cells.push([i-i0, j-i0]);
+        }
+      }
+    }
+    onselect(selected_cells);
+  };
+  const onkeydown = ev => {
+    if (ev.key == 'ArrowUp' && curr_ir > 0) {
+      oncellclick(ev, curr_ic, curr_ir - 1, false);
+    } else if (ev.key == 'ArrowDown' && curr_ir < nr-1) {
+      oncellclick(ev, curr_ic, curr_ir + 1, false);
+    } else if (ev.key == 'ArrowLeft' && curr_ic > 0) {
+      oncellclick(ev, curr_ic - 1, curr_ir, false);
+    } else if (ev.key == 'ArrowRight' && curr_ic < nc-1) {
+      oncellclick(ev, curr_ic + 1, curr_ir, false);
+    }
+  };
   let contents = [];
   if (col_titles != "") {
     let row = [h('th', styles, '')]
@@ -70,20 +136,31 @@ export const EditableTable = (props = {}, children = []) => {
     }
     contents.push(h('tr', {}, row));
   }
+  let col_styles = [];
+  for (let ic=0; ic < nc; ic++) {
+    col_styles.push({'width':col_widths[ic], ...styles});
+  }
   for (let ir=0; ir < nr; ir++) {
     let row = [h('td', styles, row_titles[ir])] || [];
     for (let ic=0; ic < nc; ic++) {
+      const this_style = {
+        'onclick': ev => oncellclick(ev, ic, ir, false),
+        'ondblclick': ev => oncellclick(ev, ic, ir, true),
+        'onkeypress': ev => oncellclick(ev, ic, ir, true),
+        'onkeydown': ev => onkeydown(ev),
+        ...col_styles[ic]
+      };
       if (editable[ic][ir]) {
-        row.push(h('td', styles, h('input', {'value':values[ic][ir], 
-          'onchange': ev => props.onchange(ev, [ir, ic, ev.target.value]),
+        row.push(h('td', this_style, h('input', {'value':values[ic][ir],
+          'onchange': ev => onchange(ev, [ir, ic, ev.target.value]),
           ...editprop})));
       } else {
-        row.push(h('td', styles, values[ic][ir]));
+        row.push(h('td', {'tabindex':'0', ...this_style}, values[ic][ir]));
       }
     }
     contents.push(h('tr', {}, row));
   }
-  return h('table', {'onchange':onchange, ...styles}, contents);
+  return h('table', {'border':'0px', 'border-collapse':'collapse', 'bgColor':'white'}, contents);
 };
 
 export const NumberSpinner = (props = {}, children = []) =>
