@@ -18,6 +18,7 @@ class MetaQt(type):
     DisplayRole = property(lambda self: 'displayrole')
     ApplicationModal = property(lambda self: 'applicationmodal')
     WA_DeleteOnClose = property(lambda self: 'wadeleteonclose')
+    WA_TransparentForMouseEvents = property(lambda self: 'watransparentformouseevents')
     ItemIsEditable = property(lambda self: 0b1)
     ItemIsEnabled = property(lambda self: 0b10)
     ItemIsSelectable = property(lambda self: 0b100)
@@ -116,3 +117,6 @@ class QFileInfo():
         self._file = filename
     def isFile(self):
         return os.path.isfile(self._file)
+
+class QObject():
+    def __init__(self): ...

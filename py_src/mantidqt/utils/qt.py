@@ -44,7 +44,8 @@ class QAppThreadCall():
     def __call__(self, *args, **kwargs):
         self._callable(*args, **kwargs)
 
-def force_method_calls_to_qapp_thread(instance, *, all_methods=False): ...
+def force_method_calls_to_qapp_thread(instance, *, all_methods=False):
+    return instance
 
 import types, sys
 qtc_name = f'{__name__}.qappthreadcall'
@@ -52,3 +53,9 @@ qtc_mod = types.ModuleType(qtc_name)
 qtc_mod.__dict__['QAppThreadCall'] = QAppThreadCall
 qtc_mod.__dict__['force_method_calls_to_qapp_thread'] = force_method_calls_to_qapp_thread
 sys.modules[qtc_name] = qtc_mod
+
+from qtpy.QtGui import QDoubleValidator
+lev_name = f'{__name__}.line_edit_double_validator'
+lev_mod = types.ModuleType(qtc_name)
+lev_mod.__dict__['LineEditDoubleValidator'] = QDoubleValidator
+sys.modules[lev_name] = lev_mod

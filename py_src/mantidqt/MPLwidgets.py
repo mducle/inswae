@@ -26,6 +26,8 @@ class FigureCanvas(FigureCanvasHTMLCanvas, QWidget):
     def show(self):
         # Both FigureCanvasHTMLCanvas and QWidget have show()
         FigureCanvasHTMLCanvas.show(self) 
+    def updateGeometry(self):
+        pass
     def _create_root_element(self):
         # Overrides so it is not included in the "pyodideMplTarget" element
         return self._div
@@ -38,3 +40,4 @@ class NavigationToolbar2QT():
         pass
     def isVisible(self):
         return False
+    def hide(self): ...

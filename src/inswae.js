@@ -102,7 +102,7 @@ async function init_python() {
     await window.pyodide.loadPackage(pkg);
   }
   // Imports matplotlib and Mantid now to save time on initialising apps
-  window.pyodide.runPython(`
+  await window.pyodide.runPython(`
       import matplotlib.pyplot
       import mantid.simpleapi
   `);

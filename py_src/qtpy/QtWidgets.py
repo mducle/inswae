@@ -41,6 +41,8 @@ class QApplication():
         self.window = None
         global QAPP
         QAPP = self
+        self._lastwindowclosed = QtCore.Signal()
+        self._proc = None
     def set_window(self, window):
         self.window = window
     @staticmethod
@@ -49,9 +51,11 @@ class QApplication():
         return QAPP
     @staticmethod
     def processEvents(): ...
+    @property
+    def lastWindowClosed(self):
+        return self._lastwindowclosed
+    def quit(self): ...
     def exec(self):
-        global QAPP
-        QAPP = None
         if self.window is not None:
             def callback(core, args, options, metadata):
                 proc = window.osjs.make('osjs/application', toObj({'args':args, 'options':options, 'metadata':metadata}))
@@ -101,6 +105,8 @@ class QLayout():
         widget = QWidget()
         widget.setLayout(layout)
         self.addWidget(widget, *args)
+    def setContentsMargins(self, left, top, right, bottom): ...
+    def setSpacing(self, value): ...
     def __call__(self):
         return self
 
@@ -233,7 +239,7 @@ class QWidget():
             if self._layout is None:
                 raise RuntimeError('Custom top level widget has no layout')
             self._layout._styles = {**self._style, **self._framestyle}
-            if QAPP is None:
+            if QAPP is None or QAPP.window is not None:
                 window_data = toObj({'title': self._title, 'dimension':self._size()})
                 def createApp(content, win):
                     renderfn = create_proxy(self._layout.render_function)
@@ -243,6 +249,7 @@ class QWidget():
                 QAPP.set_window(self)
         else:
             self._hidden = False
+    def raise_(self): ...
     def text(self):
         return self._text
     def setText(self, text):
@@ -268,6 +275,9 @@ class QWidget():
             self._framestyle = {'border-style':'none '+{64:'solid', 66:'outset', 68:'inset'}[style]+' none none', 'border-color':'white'}
         else:
             self._framestyle = {'border-style':{17:'solid', 18:'outset', 20:'inset'}[style], 'border-color':'white'}
+    def setFrame(self, value): ...
+    def setStyleSheet(self, stylesheet): ...
+    def setFlat(self, value): ...
     def setLineWidth(self, linewidth):
         self._framestyle.update({'border-width':f'{linewidth}px'})
     def setToolTip(self, text):
@@ -276,10 +286,14 @@ class QWidget():
         self._style.update({'left':x, 'top':y, 'width':w, 'height':h})
     def setEnabled(self, value):
         self._props.pop('disabled', None) if value else self._props.update({'disabled':1})
+    def setDisabled(self, value):
+        self.setEnabled(not value)
     def setValidator(self, validator):
         self._validator = validator
     def validator(self):
         return self._validator
+    def setParent(self, parent):
+        self.parent = parent
     def setMinimumWidth(self, minwidth):
         pass
     def setMaximumWidth(self, maxwidth):
@@ -290,7 +304,7 @@ class QWidget():
         pass
     def setMinimumSize(self, *args):
         pass
-    def setSizePolicy(self, sizePolicy):
+    def setSizePolicy(self, sizePolicy, *args):
         pass
     def setFixedWidth(self, width):
         pass
@@ -302,7 +316,7 @@ class QWidget():
         return _header()
     def verticalHeader(self):
         return _header()
-    def setAttribute(self, attribute):
+    def setAttribute(self, attribute, value=None):
         pass
     def setAnimated(self, policy):
         pass
@@ -337,25 +351,28 @@ class QFrame(QWidget, metaclass=MetaQFrame):
         super(QFrame, self).__init__(parent)
         self._element = 'div'
 
-class _menubar():
+class QMenuBar(QWidget):
     def __init__(self, parent):
-        self._parent = parent
+        super(QMenuBar, self).__init__(parent)
+        self._menuitems = []
     def addMenu(self, menu):
-        self._parent._menuitems.append(menu)
+        self._menuitems.append(menu)
+    def addAction(self, action): ...
 
 class QMainWindow(QWidget):
     def __init__(self, parent=None, flags=None):
         super(QMainWindow, self).__init__(parent)
         self._element = 'div'
         self._layout = QBoxLayout()
-        self._menu = _menubar(self)
-        self._menuitems = []
+        self._menu = QMenuBar(self)
         self._statusbar = None
     def setCentralWidget(self, widget):
         self._layout._widgets = [widget]
         widget.parent = self
     def menuBar(self):
         return self._menu
+    def setMenuBar(self, menubar):
+        self._menu = menubar
     def statusBar(self):
         if self._statusbar is None:
             self._statusbar = QStatusBar(self)
@@ -368,6 +385,7 @@ class QPushButton(QWidget):
         self._text = text
         self._element = osjsGui.Button
         self._clicked = EventProxy(self, 'onclick', self._clickedWrapper)
+        self._toggled = QtCore.Signal()
         self._props = {'label':'_text'}
     def _clickedWrapper(self, fn):
         def clickWrap(event):
@@ -376,7 +394,11 @@ class QPushButton(QWidget):
     @property
     def clicked(self):
         return self._clicked
+    @property
+    def toggled(self):
+        return self._toggled
     def setMenu(self, menu): ...
+    def setCheckable(self, value): ...
 
 class QLabel(QWidget):
     def __init__(self, text='', parent=None):
@@ -415,6 +437,8 @@ class QLineEdit(QWidget):
         return self._editingFinished
     def setPlaceholderText(self, txt): ...
     def setClearButtonEnabled(self, clearbtn): ...
+    def setReadOnly(self, value):
+        self._props.update({'readonly':'readonly'}) if value else self._props.pop('readonly', None) 
 
 class QComboBoxActivatedProxy():
     # To handle both the .activated.connect and .activated[str].connect syntax
@@ -659,10 +683,6 @@ class QInputDialog(QWidget):
     def __init__(self, parent=None):
         super(QInputDialog, self).__init__(parent)
 
-class QMenu(QWidget):
-    def __init__(self, parent=None):
-        super(QMenu, self).__init__(parent)
-
 class QSpacerItem():
     def __init__(self, *args):
         pass
@@ -687,6 +707,8 @@ class QAction(QWidget):
     def isChecked(self):
         return False
     def setChecked(self, value): ...
+    def setCheckable(self, value): ...
+    def setVisible(self, value): ...
     @property
     def toggled(self):
         return self._triggered
@@ -696,10 +718,15 @@ class QActionGroup():
     def addAction(self, action): ...
 
 class QMenu(QWidget):
-    def __init__(self, name, parent=None):
-        self._name = name
+    def __init__(self, title=None, parent=None):
+        if title is not None and isinstance(title, str):
+            self._title = title
+        else:
+            parent = title
+        super(QMenu, self).__init__(parent)
         self._menuactions = []
         #self._element = osjsGui.MenubarItem
+    def addMenu(self, menu): ...
     def addAction(self, action, extension=None):
         self._menuactions.append(action)
     def addSeparator(self): ...
@@ -707,10 +734,10 @@ class QMenu(QWidget):
 class QSPMeta(type):
     Preferred = property(lambda self: 'preferred')
     Fixed = property(lambda self: 'fixed')
+    Expanding = property(lambda self: 'expanding')
 
 class QSizePolicy(metaclass=QSPMeta):
-    def __init__(self, *args):
-        pass
+    def __init__(self, *args): ...
 
 class QModelIndex():
     def __init__(self, r, c):
@@ -743,6 +770,9 @@ class QTableView(QWidget):
         def _selectedWrap(value):
             self._currsel = [QModelIndex(v[0], v[1]) for v in value]
         self._actions['selected'] = _selectedWrap
+        def _currentCbWrap(value):
+            self._props['curr_ir'], self._props['curr_ic'] = tuple(value)
+        self._actions['currentcb'] = _currentCbWrap
         def _clickedWrapper(fn):
             def clickWrap(event, value=None):
                 if value:
@@ -815,9 +845,6 @@ class QTableWidget():
     def __init__(self, *args, **kwargs): ...
 
 class QTableWidgetItem():
-    def __init__(self, *args, **kwargs): ...
-
-class QListWidgetItem():
     def __init__(self, *args, **kwargs): ...
 
 class QHeaderView(QWidget):
@@ -903,24 +930,57 @@ class QSplitter(QWidget):
     def content(self, state, actions):
         return [w.h(state, actions) for w in self._widgets if w.isVisible()]
 
+class QListWidgetItem(QWidget):
+    def __init__(self, text=None, parent=None, *args):
+        super(QListWidgetItem, self).__init__()
+        if text is not None and isinstance(text, str):
+            self._text = text
+            self._parent = parent
+        else:
+            self._parent = text
+        self._element = 'li'
+        self._style = {'tabindex':'0'}
+        self._selected = False
+    def setSelected(self, selected):
+        self._selected = selected
+    def content(self, state, actions):
+        return self._text
+
 class QListWidget(QWidget):
     def __init__(self, parent=None):
         super(QListWidget, self).__init__(parent)
         self._items = []
-        self._element = 'ul'
-        self._style = {'list-style-type':'none', 'display':'table-row'}
-        self._changed = EventProxy(self, 'onclick', self._changedWrapper)
-    def _changedWrapper(self, fn):
-        def wrap(event):
-            fn()
+        self._element = jswidgets.ListWidget
+        self._props = {'items':[], 'id':id(self)} 
+        def _currentCbWrap(value):
+            self._props['curr_ii'] = value
+        self._actions['currentcb'] = _currentCbWrap
+        def _changedWrapper(fn):
+            def wrap(new_selection):
+                self.clearSelection()
+                for it in new_selection:
+                    self._items[it].setSelected(True)
+                fn()
+            return wrap
+        self._changed = EventProxy(self, 'selectionchanged', _changedWrapper)
     def addItem(self, item):
         self._items.append(item)
+        self._props['items'].append(item.text())
+        if hasattr(item, '_parent'):
+            item._parent = self
+    def count(self):
+        return len(self._items)
+    def item(self, index):
+        return self._items[index]
+    def selectedItems(self):
+        return [it for it in self._items if it._selected]
     def setSelectionMode(self, selmode): ...
-    def clearSelection(self): ...
+    def clearSelection(self):
+        for it in self._items: it.setSelected(False)
     @property
     def itemSelectionChanged(self):
         return self._changed
     def content(self, state, actions):
         # Might need to custom CSS class in inswae.css with focus background property
         # https://stackoverflow.com/questions/33246967/select-item-from-unordered-list-in-html
-        return [h('li', toObj({'tabindex':'1'}), str(w)) for w in self._items if w.isVisible()]
+        return [w.h(state, actions) for w in self._items if w.isVisible()]
