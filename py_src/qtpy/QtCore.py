@@ -120,3 +120,28 @@ class QFileInfo():
 
 class QObject():
     def __init__(self): ...
+
+class QPoint():
+    def __init__(self, xpos=0, ypos=0):
+        self._x, self._y = (xpos, ypos)
+    def x(self): return self._x
+    def y(self): return self._y
+
+class QSize():
+    def __init__(self, w=0, h=0):
+        self._w, self._h = (w, h)
+    def width(self): return self._x
+    def height(self): return self._y
+    
+class QRect():
+    def __init__(self, left, top, width, height):
+        if isinstance(left, QPoint):
+            if isinstance(top, QPoint):  # __init__(topleft, bottomright)
+                self._l, self._t, self._w, self._h = (left.x(), left.y(), top.x()-left.x(), top.y()-left.y())
+            else:                        # __init__(topleft, size)
+                self._l, self._t, self._w, self._h = (left.x(), left.y(), top.width(), top.height())
+        else:
+            self._l, self._t, self._w, self._h = (left, top, width, height)
+    def x(self): return self._l
+    def y(self): return self._t
+    def center(self): return QPoint(self._l + self._w/2, self._t + self._h/2)

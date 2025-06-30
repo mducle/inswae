@@ -45,8 +45,9 @@ def create_dgsplanner():
 def createMSlice():
     from qtpy.QtWidgets import QApplication
     from mslice.app.mainwindow import MainWindow
+    import mslice.app
     app = QApplication([])
-    window = MainWindow(False)
-    window._style = {'width':950, 'height':650}
-    window.show()
+    mslice.app.MAIN_WINDOW = MainWindow(False)
+    mslice.app.MAIN_WINDOW._style = {'width':950, 'height':500}
+    mslice.app.MAIN_WINDOW.show()
     return app.exec()

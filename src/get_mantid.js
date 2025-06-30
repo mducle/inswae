@@ -18,8 +18,13 @@ const files = {
   },
   '/scripts/': {
     'pychop/': 
-        ['__init__.py', 'Chop.py', 'ISISDisk.py', 'ISISFermi.py', 'Instruments.py', 'MulpyRep.py',
-         'arcs.yaml', 'cncs.yaml', 'hyspec.yaml', 'let.yaml', 'maps.yaml', 'mari.yaml', 'merlin.yaml', 'sequoia.yaml'],
+      ['__init__.py', 'Chop.py', 'ISISDisk.py', 'ISISFermi.py', 'Instruments.py', 'MulpyRep.py',
+       'arcs.yaml', 'cncs.yaml', 'hyspec.yaml', 'let.yaml', 'maps.yaml', 'mari.yaml', 'merlin.yaml', 'sequoia.yaml'],
+  },
+  '/Framework/PythonInterface/': {
+    'mantid/plots/': ['axesfunctions.py', 'datafunctions.py', 'mantidimage.py', 'quad_mesh_wrapper.py', 'utility.py'],
+    'mantid/plots/resampling_image/': ['__init__.py', 'samplingimage.py'],
+    'mantid/plots/modest_image/': ['LICENSE', '__init__.py', 'modest_image.py'],
   }
 };
 

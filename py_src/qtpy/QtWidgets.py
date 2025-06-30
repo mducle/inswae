@@ -62,7 +62,7 @@ class QApplication():
                 def createApp(content, win):
                     renderfn = create_proxy(self.window._layout.render_function)
                     return app(toObj({'stateid':0}), toObj({'change':create_proxy(state_change)}), renderfn, content)
-                proc.createWindow(toObj({'title': self.window._title, 'dimension':self.window._size()})).render(createApp)
+                self.window._jswindow = proc.createWindow(toObj({'title': self.window._title, 'dimension':self.window._size()})).render(createApp)
             return callback
 
 def action_wrap(state, actions, call):
@@ -219,10 +219,13 @@ class QWidget():
         self._element = 'div'
         self._validator = None
         self._sender = None
+        self._jswindow = None
     def setWindowFlags(self, flags):
         self._flags = flags
     def setWindowTitle(self, title):
         self._title = title
+    def windowTitle(self):
+        return self._title
     def setLayout(self, layout):
         self._layout = layout
     @property
@@ -244,7 +247,7 @@ class QWidget():
                 def createApp(content, win):
                     renderfn = create_proxy(self._layout.render_function)
                     return app(toObj({'stateid':0}), toObj({'change':create_proxy(state_change)}), renderfn, content)
-                window.osjs.make('osjs/window', window_data).render(createApp)
+                self._jswindow = window.osjs.make('osjs/window', window_data).render(createApp)
             else:
                 QAPP.set_window(self)
         else:
@@ -294,6 +297,14 @@ class QWidget():
         return self._validator
     def setParent(self, parent):
         self.parent = parent
+    def setWidth(self, value):
+        self._style['width'] = value
+    def width(self):
+        return self._size()['width']
+    def setHeight(self, value):
+        self._style['height'] = value
+    def height(self):
+        return self._size()['height']
     def setMinimumWidth(self, minwidth):
         pass
     def setMaximumWidth(self, maxwidth):
@@ -377,6 +388,11 @@ class QMainWindow(QWidget):
         if self._statusbar is None:
             self._statusbar = QStatusBar(self)
         return self._statusbar
+    def move(self, new_x, new_y):
+        if self._jswindow is not None:
+            self._jswindow.setPosition(toObj({'left':new_x, 'top':new_y}))
+    def activateWindow(self): ...
+    def showNormal(self): ...
     def close(self): ...
 
 class QPushButton(QWidget):
@@ -525,6 +541,10 @@ class QTabWidget(QWidget):
         return self._index
     def setCurrentIndex(self, index):
         self._index = index
+    def tabText(self, index):
+        return self._tabTitles[index]
+    def setTabText(self, index, text):
+        self._tabTitles[index] = text
     def _currentChangedWrapper(self, fn):
         def changeWrap(event, index, value):
             self._index = index
@@ -984,3 +1004,9 @@ class QListWidget(QWidget):
         # Might need to custom CSS class in inswae.css with focus background property
         # https://stackoverflow.com/questions/33246967/select-item-from-unordered-list-in-html
         return [w.h(state, actions) for w in self._items if w.isVisible()]
+
+class QDesktopWidget():
+    def __init__(self):
+        pass
+    def screenGeometry(self):
+        return QtCore.QRect(0, 0, window.innerWidth, window.innerHeight)
