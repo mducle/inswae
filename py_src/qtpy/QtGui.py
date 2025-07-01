@@ -22,6 +22,7 @@ class QDoubleValidator():
         return [QValidator.Acceptable if x >= self._min and x <= self._max else QValidator.Intermediate]
     def setBottom(self, value):
         self._min = value
+    def setLocale(self, locale): ...
 
 class QRegExpValidator():
     def __init__(self, regex='', parent=None):

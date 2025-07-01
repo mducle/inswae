@@ -1,0 +1,1 @@
+QT_VERSION = "5"

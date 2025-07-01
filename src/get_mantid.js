@@ -3,7 +3,7 @@ const fetch = require('node-fetch');
 
 const prefix = 'https://github.com/mantidproject/mantid/raw/';
 const SHA = 'a8f64cccc781eac9892433e956bab7104ebf1213';
-const inst_srcpath = 'refs/head/main/instrument';
+const inst_srcpath = 'refs/heads/main/instrument';
 const inst_destpath = 'py_src/mantid_instruments';
 const files = {
   '/qt/python/mantidqtinterfaces/': {
@@ -18,8 +18,13 @@ const files = {
   },
   '/scripts/': {
     'pychop/': 
-        ['__init__.py', 'Chop.py', 'ISISDisk.py', 'ISISFermi.py', 'Instruments.py', 'MulpyRep.py',
-         'arcs.yaml', 'cncs.yaml', 'hyspec.yaml', 'let.yaml', 'maps.yaml', 'mari.yaml', 'merlin.yaml', 'sequoia.yaml'],
+      ['__init__.py', 'Chop.py', 'ISISDisk.py', 'ISISFermi.py', 'Instruments.py', 'MulpyRep.py',
+       'arcs.yaml', 'cncs.yaml', 'hyspec.yaml', 'let.yaml', 'maps.yaml', 'mari.yaml', 'merlin.yaml', 'sequoia.yaml'],
+  },
+  '/Framework/PythonInterface/': {
+    'mantid/plots/': ['axesfunctions.py', 'datafunctions.py', 'mantidimage.py', 'quad_mesh_wrapper.py', 'utility.py'],
+    'mantid/plots/resampling_image/': ['__init__.py', 'samplingimage.py'],
+    'mantid/plots/modest_image/': ['LICENSE', '__init__.py', 'modest_image.py'],
   }
 };
 
@@ -70,7 +75,7 @@ if(!fs.existsSync(inst_destpath)) {
   filename => {
     const outfile = inst_destpath + '/' + filename;
     if(!fs.existsSync(outfile)) {
-      const fileurl = prefix + inst_srcpath + filename;
+      const fileurl = prefix + inst_srcpath + '/' + filename;
       console.log(fileurl);
       fetch(fileurl)
         .then(response => response.text())

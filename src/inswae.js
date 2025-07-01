@@ -96,10 +96,16 @@ async function init_python() {
   await window.pyodide.loadPackage("micromantid-0.0.1-cp312-cp312-pyodide_2024_0_wasm32.whl");
   // Copies files in the overrides folder to Python site-packages folder
   await window.pyodide.loadPackage("python-overrides-1.0.0-py2.py3-none-any.whl");
+  await window.pyodide.loadPackage("mslice-1.0.0-py2.py3-none-any.whl");
   // Loads Python wheels
   for (const pkg of ["numpy", "pyyaml", "matplotlib"]) {//, "scipy"]) {
     await window.pyodide.loadPackage(pkg);
   }
+  // Imports matplotlib and Mantid now to save time on initialising apps
+  await window.pyodide.runPython(`
+      import matplotlib.pyplot
+      import mantid.simpleapi
+  `);
   document.getElementById("loading_spinner").remove();
   // Creates shortcuts
   if (!fs.analyzePath('/home/pyodide/.desktop').exists) { fs.mkdir('/home/pyodide/.desktop'); }
@@ -110,7 +116,8 @@ async function init_python() {
      shortobj + '"icon": "apps/TofConverter/tofconverter.png", "path": "apps:/TofConverter", "filename": "TofConverter" }, ' +
      shortobj + '"icon": "apps/SampleTransmission/icon.png", "path": "apps:/SampleTransmission", "filename": "SampleTransmission" }, ' +
      shortobj + '"icon": "apps/PyChop/icon.png", "path": "apps:/PyChop", "filename": "PyChop" }, ' +
-     shortobj + '"icon": "apps/DGSPlanner/icon.png", "path": "apps:/DGSPlanner", "filename": "DGSPlanner" }'
+     shortobj + '"icon": "apps/DGSPlanner/icon.png", "path": "apps:/DGSPlanner", "filename": "DGSPlanner" }, ' +
+     shortobj + '"icon": "favicon.ico", "path": "apps:/MSlice", "filename": "MSlice" }'
   +']');
   window.osjs.make('osjs/settings').set('osjs/desktop', 'iconview.enabled', true).save()
 /*

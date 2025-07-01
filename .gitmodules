@@ -1,0 +1,3 @@
+[submodule "mslice"]
+	path = mslice
+	url = https://github.com/mducle/mslice

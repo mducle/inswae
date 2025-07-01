@@ -1,0 +1,13 @@
+class MetaQPrinter(type):
+    Landscape = property(lambda self: 'landscape')
+    Portrait = property(lambda self: 'portrait')
+
+class QPrinter(metaclass=MetaQPrinter):
+    def __init__(self): ...
+    def setResolution(self, resolution): ...
+    def setOrientation(self, orientation): ...
+
+class QPrintDialog():
+    def __init__(self, qprint): ...
+    def _exec():
+        return False
