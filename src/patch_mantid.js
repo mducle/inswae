@@ -17,7 +17,7 @@ const patches = fs.readdirSync(diffdir).map(
 // Copies original files over and patch them if needed
 fs.readdirSync(srcdir, { recursive: true }).map(
   file => {
-    const destfile = destdir + '/' + file;
+    const destfile = destdir + '/' + file.replaceAll('\\', '/');
     const subdir = path.dirname(destfile);
     if (!fs.existsSync(subdir)) {
       try {
