@@ -97,9 +97,9 @@ async function init_python() {
     await window.pyodide.loadPackage(pkg);
   }
   // Installs mantid
-  await window.pyodide.loadPackage("https://github.com/mducle/micromantid/releases/download/v1.0/micromantid-1.0.0-cp312-cp312-pyodide_2024_0_wasm32.whl");
+  await window.pyodide.loadPackage("micromantid-1.0.0-cp312-cp312-pyodide_2024_0_wasm32.whl");
   // Copies files in the overrides folder to Python site-packages folder
-  await window.pyodide.loadPackage("https://github.com/mducle/inswae/releases/download/v0.2.0/python-overrides-1.0.0-py2.py3-none-any.whl");
+  await window.pyodide.loadPackage("python-overrides-1.0.0-py2.py3-none-any.whl");
   // Imports matplotlib and Mantid now to save time on initialising apps
   await window.pyodide.runPython(`
       import matplotlib.pyplot
