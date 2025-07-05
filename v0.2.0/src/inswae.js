@@ -6,7 +6,7 @@ import htm from 'https://esm.sh/htm'
 const html = htm.bind(Preact.h)
 import "https://cdn.plot.ly/plotly-2.27.0.min.js";
 */
-import "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js";
+import "https://cdn.jsdelivr.net/pyodide/v0.27.1/full/pyodide.js";
 import "https://cdn.jsdelivr.net/npm/@osjs/gui/dist/main.js";
 import "https://cdn.jsdelivr.net/npm/@osjs/client/dist/main.js";
 import "https://cdn.jsdelivr.net/npm/@osjs/panels/dist/main.js";
@@ -92,12 +92,19 @@ async function init_python() {
   window.pyodide.registerJsModule("hyperapp", {h:h, text:text, app:app});
   window.pyodide.registerJsModule("jswidgets", jswidgets);
   const fs = window.pyodide.FS;
-  // Copies files in the overrides folder to Python site-packages folder
-  await window.pyodide.loadPackage("python-overrides.whl");
   // Loads Python wheels
   for (const pkg of ["numpy", "pyyaml", "matplotlib"]) {//, "scipy"]) {
     await window.pyodide.loadPackage(pkg);
   }
+  // Installs mantid
+  await window.pyodide.loadPackage("https://github.com/mducle/micromantid/releases/download/v1.0/micromantid-1.0.0-cp312-cp312-pyodide_2024_0_wasm32.whl");
+  // Copies files in the overrides folder to Python site-packages folder
+  await window.pyodide.loadPackage("https://github.com/mducle/inswae/releases/download/v0.2.0/python-overrides-1.0.0-py2.py3-none-any.whl");
+  // Imports matplotlib and Mantid now to save time on initialising apps
+  await window.pyodide.runPython(`
+      import matplotlib.pyplot
+      import mantid.simpleapi
+  `);
   document.getElementById("loading_spinner").remove();
   // Creates shortcuts
   if (!fs.analyzePath('/home/pyodide/.desktop').exists) { fs.mkdir('/home/pyodide/.desktop'); }
@@ -111,43 +118,6 @@ async function init_python() {
      shortobj + '"icon": "apps/DGSPlanner/icon.png", "path": "apps:/DGSPlanner", "filename": "DGSPlanner" }'
   +']');
   window.osjs.make('osjs/settings').set('osjs/desktop', 'iconview.enabled', true).save()
-/*
-  const exm = window.pyodide.runPython(`
-    # Test script of all currently implemented widgets
-    from qtpy.QtWidgets import *
-    app = QApplication([])
-    window = QWidget()
-    layout = QHBoxLayout()
-    label = QLabel('Spin!')
-    spinner = QDoubleSpinBox()
-    layout.addWidget(label)
-    layout.addWidget(spinner)
-    window.setLayout(layout)
-    window.show()
-    app.exec()
-  `);
-  const pkg = window.osjs.make('osjs/packages');
-  pkg.addPackages([ {
-    "name": "Exm",
-    "category": "utilities",
-    "title": { "en_EN": "Exm" },
-    "description": { "en_EN": "Example Python App" }
-  } ]);
-  pkg.register("Exm", exm);
-  console.log(pkg.getPackages());
-  pkg.launch('Exm');
-
-  window.pyodide.runPython(`
-    from mantid.simpleapi import CalculateSampleTransmission
-    transmission_ws = CalculateSampleTransmission(
-        WavelengthRange='0.0,0.2,2.0',
-        ChemicalFormula='Li',
-        DensityType='Mass Density',
-        density=0.1,
-        thickness=0.1,
-    )
-  `);
-*/
 };
 
 // We need Pyodide to be loaded first before initialising OS.js as we
