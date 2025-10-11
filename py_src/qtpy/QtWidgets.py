@@ -62,7 +62,8 @@ class QApplication():
                 def createApp(content, win):
                     renderfn = create_proxy(self.window._layout.render_function)
                     return app(toObj({'stateid':0}), toObj({'change':create_proxy(state_change)}), renderfn, content)
-                self.window._jswindow = proc.createWindow(toObj({'title': self.window._title, 'dimension':self.window._size()})).render(createApp)
+                if self.window._jswindow is None:
+                    self.window._jswindow = proc.createWindow(toObj({'title': self.window._title, 'dimension':self.window._size()})).render(createApp)
             return callback
 
 def action_wrap(state, actions, call):
@@ -242,7 +243,7 @@ class QWidget():
             if self._layout is None:
                 raise RuntimeError('Custom top level widget has no layout')
             self._layout._styles = {**self._style, **self._framestyle}
-            if QAPP is None or QAPP.window is not None:
+            if (QAPP is None or QAPP.window is not None) and self._jswindow is None:
                 window_data = toObj({'title': self._title, 'dimension':self._size()})
                 def createApp(content, win):
                     renderfn = create_proxy(self._layout.render_function)
@@ -497,7 +498,10 @@ class QComboBox(QWidget):
     def _activatedWrapper(self, fn):
         def actWrap(event, value, choices):
             self._text = value
-            fn(value)
+            try:
+                fn(value)
+            except TypeError:
+                fn()
         return actWrap
     @property
     def activated(self):
@@ -612,6 +616,8 @@ class QCheckBox(QWidget):
             self._checked = value
             try:
                 fn(value)
+            except TypeError:
+                fn()
             except:
                 pass
         return stateWrap
