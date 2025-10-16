@@ -90,7 +90,7 @@ async function url_to_fs(urlpath, fspath) {
   xhr.send();
   xhr.onload = () => { if (xhr.status == 200) { 
     let arraybuf = new Uint8Array(xhr.response);
-    fs.writeFile(fspath, arraybuf);
+    window.pyodide.FS.writeFile(fspath, arraybuf);
   } }
 };
 

@@ -62,7 +62,7 @@ class QApplication():
                 def createApp(content, win):
                     renderfn = create_proxy(self.window._layout.render_function)
                     return app(toObj({'stateid':0}), toObj({'change':create_proxy(state_change)}), renderfn, content)
-                if self.window._jswindow is None:
+                if self.window._jswindow is None or self.window._jswindow.destroyed:
                     self.window._jswindow = proc.createWindow(toObj({'title': self.window._title, 'dimension':self.window._size()})).render(createApp)
             return callback
 
@@ -243,7 +243,9 @@ class QWidget():
             if self._layout is None:
                 raise RuntimeError('Custom top level widget has no layout')
             self._layout._styles = {**self._style, **self._framestyle}
-            if (QAPP is None or QAPP.window is not None) and self._jswindow is None:
+            if QAPP is None or QAPP.window is not None:
+                if self._jswindow is not None and self._jswindow.destroyed is False:
+                    return
                 window_data = toObj({'title': self._title, 'dimension':self._size()})
                 def createApp(content, win):
                     renderfn = create_proxy(self._layout.render_function)
