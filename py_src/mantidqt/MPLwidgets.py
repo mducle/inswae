@@ -1,15 +1,14 @@
 import js
 from qtpy.QtWidgets import QWidget
-from matplotlib.backends.wasm_backend import FigureCanvasAggWasm, NavigationToolbar2AggWasm
+from inswae.mplbackend import FigureCanvasJsAgg
 
-class FigureCanvas(FigureCanvasAggWasm, QWidget):
+class FigureCanvas(FigureCanvasJsAgg, QWidget):
     def __init__(self, *arg, **kwargs):
-        FigureCanvasAggWasm.__init__(self, *arg, **kwargs)
+        FigureCanvasJsAgg.__init__(self, *arg, **kwargs)
         QWidget.__init__(self)
         self._element = 'iframe'
         self._style = {'border':'none'}
         self._actions = {'onload':self._onloadWrapper()}
-        self.toolbar = NavigationToolbar2AggWasm(self)
         self._init = False
         self._div = js.document.getElementById(self._id + '_rootdiv')
         if not self._div:
@@ -24,8 +23,8 @@ class FigureCanvas(FigureCanvasAggWasm, QWidget):
                 self.show()
         return loadWrap
     def show(self):
-        # Both FigureCanvasAggWasm and QWidget have show()
-        FigureCanvasAggWasm.show(self) 
+        # Both FigureCanvasJsAgg and QWidget have show()
+        FigureCanvasJsAgg.show(self) 
     def updateGeometry(self):
         pass
     def _create_root_element(self):

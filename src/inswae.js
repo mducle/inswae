@@ -6,13 +6,14 @@ import htm from 'https://esm.sh/htm'
 const html = htm.bind(Preact.h)
 import "https://cdn.plot.ly/plotly-2.27.0.min.js";
 */
-import "https://cdn.jsdelivr.net/pyodide/v0.27.1/full/pyodide.js";
+import "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js";
 import "https://cdn.jsdelivr.net/npm/@osjs/gui/dist/main.js";
 import "https://cdn.jsdelivr.net/npm/@osjs/client/dist/main.js";
 import "https://cdn.jsdelivr.net/npm/@osjs/panels/dist/main.js";
 import "https://cdn.jsdelivr.net/npm/@osjs/dialogs/dist/main.js";
 import EmscriptenFSAdapter from "./emfs-adapter.js";
 import { jswidgets } from "./widgets.js";
+import { mpljs } from "./mpl.js";
 
 console.log("Imported JS from CDNs")
 
@@ -102,13 +103,14 @@ async function init_python() {
   window.pyodide.registerJsModule("osjsDialogs", osjsDialogs);
   window.pyodide.registerJsModule("hyperapp", {h:h, text:text, app:app});
   window.pyodide.registerJsModule("jswidgets", jswidgets);
+  window.pyodide.registerJsModule("mpljs", mpljs);
   const fs = window.pyodide.FS;
   // Loads Python wheels
   for (const pkg of ["numpy", "pyyaml", "matplotlib"]) {//, "scipy"]) {
     await window.pyodide.loadPackage(pkg);
   }
   // Installs mantid
-  await window.pyodide.loadPackage("micromantid-0.0.1-cp312-cp312-pyodide_2024_0_wasm32.whl");
+  await window.pyodide.loadPackage("micromantid-1.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl");
   // Copies files in the overrides folder to Python site-packages folder
   await window.pyodide.loadPackage("python-overrides-1.0.0-py2.py3-none-any.whl");
   await window.pyodide.loadPackage("mslice-1.0.0-py2.py3-none-any.whl");
@@ -131,7 +133,7 @@ async function init_python() {
      shortobj + '"icon": "favicon.ico", "path": "apps:/MSlice", "filename": "MSlice" }'
   +']');
   window.osjs.make('osjs/settings').set('osjs/desktop', 'iconview.enabled', true).save()
-  //url_to_fs("MAR25352_Ei180.00meV.nxspe", "/home/pyodide/MAR25352_Ei180.00meV.nxspe");
+  url_to_fs("MAR25352_Ei180.00meV.nxspe", "/home/pyodide/MAR25352_Ei180.00meV.nxspe");
 /*
   const exm = window.pyodide.runPython(`
     # Test script of all currently implemented widgets
