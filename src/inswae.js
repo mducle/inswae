@@ -133,7 +133,7 @@ async function init_python() {
      shortobj + '"icon": "favicon.ico", "path": "apps:/MSlice", "filename": "MSlice" }'
   +']');
   window.osjs.make('osjs/settings').set('osjs/desktop', 'iconview.enabled', true).save()
-  url_to_fs("MAR25352_Ei180.00meV.nxspe", "/home/pyodide/MAR25352_Ei180.00meV.nxspe");
+  //url_to_fs("MAR25352_Ei180.00meV.nxspe", "/home/pyodide/MAR25352_Ei180.00meV.nxspe");
 /*
   const exm = window.pyodide.runPython(`
     # Test script of all currently implemented widgets
