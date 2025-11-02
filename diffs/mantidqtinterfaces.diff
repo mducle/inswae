@@ -10,6 +10,18 @@ diff -urd mantid/mantidqtinterfaces/DGSPlanner/ClassicUBInputWidget.py py_src/ma
  
          # connections
          self._edita.textEdited.connect(self.check_state_latt)
+@@ -192,7 +192,10 @@
+             color = "#ff0000"
+         senderWidget.setStyleSheet("QLineEdit { background-color: %s }" % color)
+         if state == QtGui.QValidator.Acceptable:
+-            self.validateAll()
++            try:
++                self.validateAll()
++            except ValueError:
++                pass
+
+     def validateAll(self):
+         self.latt_a = float(self._edita.text())
 diff -urd mantid/mantidqtinterfaces/DGSPlanner/DGSPlannerGUI.py py_src/mantidqtinterfaces/DGSPlanner/DGSPlannerGUI.py
 --- py_src/mantidqtinterfaces/DGSPlanner/DGSPlannerGUI.py	2025-06-19 00:31:00.171042586 +0100
 +++ py_src/mantidqtinterfaces/DGSPlanner/DGSPlannerGUI.py	2025-06-19 00:55:08.033042672 +0100

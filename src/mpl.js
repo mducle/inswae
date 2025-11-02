@@ -9,12 +9,12 @@ function simpleKeys(original) {
 };
     
 class Figure {
-  constructor(mplfig, div, width, height) {
+  constructor(mplfig, parent_element, width, height) {
     this.mplfig = mplfig;
-    this.div = div;
-    this.div.id = mplfig._id;
+    this.root = document.createElement('div');
+    this.root.setAttribute('style', 'display: inline-block');
+    parent_element.appendChild(this.root);
     this.canvas = document.createElement("canvas");
-    this.canvas.id = mplfig._id + "canvas";
     this.canvas.classList.add('mpl-canvas');
     this.canvas.setAttribute('style', 'box-sizing: content-box; pointer-events: none; position: relative; z-index: 0;');
     this.context = this.canvas.getContext('2d');
@@ -35,7 +35,7 @@ class Figure {
     this.header.setAttribute('style', 'width: 100%; text-align: center; padding: 3px;');
     this.header.textContent = mplfig._title;
     titlebar.appendChild(this.header);
-    this.div.appendChild(titlebar);
+    this.root.appendChild(titlebar);
     // Main canvas div with canvas and rubberband for toolbar etc
     this.canvas_div = document.createElement("div");
     this.canvas_div.setAttribute('tabindex', '0');
@@ -91,7 +91,7 @@ class Figure {
     });
     // Disable right mouse context menu.
     this.canvas_div.addEventListener('contextmenu', function (_e) { event.preventDefault(); return false; });
-    this.div.appendChild(this.canvas_div);
+    this.root.appendChild(this.canvas_div);
     // The bottom bar, with toolbar and message display
     this._toolbar_images = [];
     this.init_toolbar(this);
@@ -100,7 +100,7 @@ class Figure {
   init_toolbar() {
     toolbar = document.createElement('div');
     toolbar.classList = 'mpl-toolbar';
-    this.div.appendChild(toolbar);
+    this.root.appendChild(toolbar);
     var fig = this;
     function on_click_closure(name) {
         return function (_event) {
@@ -117,7 +117,6 @@ class Figure {
     this.buttons = {};
     var buttonGroup = document.createElement('div');
     var toolbar_items = this.mplfig.get_toolbar_items();
-    console.log(toolbar_items);
     buttonGroup.classList = 'mpl-button-group';
     for (var toolbar_ind in toolbar_items) {
         var name = toolbar_items[toolbar_ind][0];

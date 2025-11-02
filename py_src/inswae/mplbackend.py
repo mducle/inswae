@@ -5,6 +5,7 @@ from matplotlib.backend_bases import FigureManagerBase, NavigationToolbar2, _Bac
 from matplotlib.backends import backend_agg
 import mpljs
 import base64
+import mimetypes
 from pyodide.ffi import create_proxy, to_js
 from pyodide.ffi.wrappers import set_timeout
 from pathlib import Path
