@@ -12,6 +12,10 @@ python-overrides-*-py2.py3-none-any.whl
 py_src/README.md
 bk
 tmp
+fonts
+icons
+881c86876af63b732063d7bdd51bb226.png
+f4cfc6708cf6bfc17d4b1e775f594ae2.png
 
 mantid/mantid
 mantid/pychop

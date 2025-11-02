@@ -30,7 +30,6 @@ def create_pychop():
     app = QApplication([])
     window = PyChopGui.PyChopGui(None, None)
     window._style = {'width':950, 'height':650}
-    window.show()
     return app.exec()
 
 def create_dgsplanner():

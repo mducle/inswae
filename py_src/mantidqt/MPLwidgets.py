@@ -1,15 +1,14 @@
 import js
 from qtpy.QtWidgets import QWidget
-from matplotlib_pyodide.html5_canvas_backend import FigureCanvasHTMLCanvas, NavigationToolbar2HTMLCanvas
+from inswae.mplbackend import FigureCanvasJsAgg
 
-class FigureCanvas(FigureCanvasHTMLCanvas, QWidget):
+class FigureCanvas(FigureCanvasJsAgg, QWidget):
     def __init__(self, *arg, **kwargs):
-        FigureCanvasHTMLCanvas.__init__(self, *arg, **kwargs)
+        FigureCanvasJsAgg.__init__(self, *arg, **kwargs)
         QWidget.__init__(self)
         self._element = 'iframe'
         self._style = {'border':'none'}
         self._actions = {'onload':self._onloadWrapper()}
-        self.toolbar = NavigationToolbar2HTMLCanvas(self)
         self._init = False
         self._div = js.document.getElementById(self._id + '_rootdiv')
         if not self._div:
@@ -17,15 +16,15 @@ class FigureCanvas(FigureCanvasHTMLCanvas, QWidget):
             self._div.id = self._id + '_rootdiv'
     def _onloadWrapper(self):
         def loadWrap(event):
-            if not self._init:
+            if not self._init or not js.document.getElementById(self._id + '_rootdiv'):
                 self._init = True
                 event.target.parentNode.append(self._div)
                 event.target.remove()
                 self.show()
         return loadWrap
     def show(self):
-        # Both FigureCanvasHTMLCanvas and QWidget have show()
-        FigureCanvasHTMLCanvas.show(self) 
+        # Both FigureCanvasJsAgg and QWidget have show()
+        FigureCanvasJsAgg.show(self) 
     def updateGeometry(self):
         pass
     def _create_root_element(self):
