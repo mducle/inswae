@@ -15,8 +15,6 @@ class Figure {
     this.root.setAttribute('style', 'display: inline-block');
     parent_element.appendChild(this.root);
     this.canvas = document.createElement("canvas");
-    this.canvas.classList.add('mpl-canvas');
-    this.canvas.setAttribute('style', 'box-sizing: content-box; pointer-events: none; position: relative; z-index: 0;');
     this.context = this.canvas.getContext('2d');
     var backingStore =
       this.context.backingStorePixelRatio ||
@@ -43,9 +41,7 @@ class Figure {
       'min-height: 1px; min-width: 1px; outline: 0; overflow: hidden; position: relative; resize: both; z-index: 2;');
     this.canvas.setAttribute("width", width * this.ratio);
     this.canvas.setAttribute("height", height * this.ratio);
-    //this.canvas.setAttribute("style", "left: 0; top: 0; z-index: 0; outline: 0; width:" + width + "px; height: " + height + "px");
-    this.canvas.classList.add('mpl-canvas');
-    this.canvas.setAttribute('style', 'box-sizing: content-box; pointer-events: none; position: relative; z-index: 0;');
+    this.canvas.setAttribute('style', 'box-sizing: content-box; pointer-events: none; position: absolute; left:0; top:0; z-index: 0;');
     this.canvas_div.appendChild(this.canvas);
     // Rubberband for zoom/pan etc
     this.rubberband_canvas = document.createElement('canvas');
@@ -55,6 +51,50 @@ class Figure {
     this.rubberband_canvas.setAttribute('width', width * this.ratio);
     this.rubberband_canvas.setAttribute('height', height * this.ratio);
     this.canvas_div.appendChild(this.rubberband_canvas);
+    var canvas = this.canvas;
+    var rubberband_canvas = this.rubberband_canvas;
+    this.resizeObserverInstance = new ResizeObserver(function (entries) {
+        var nentries = entries.length;
+        for (const entry of entries) {
+            var width, height;
+            if (entry.contentBoxSize) {
+                if (entry.contentBoxSize instanceof Array) {
+                    // Chrome 84 implements new version of spec.
+                    width = entry.contentBoxSize[0].inlineSize;
+                    height = entry.contentBoxSize[0].blockSize;
+                } else {
+                    // Firefox implements old version of spec.
+                    width = entry.contentBoxSize.inlineSize;
+                    height = entry.contentBoxSize.blockSize;
+                }
+            } else {
+                // Chrome <84 implements even older version of spec.
+                width = entry.contentRect.width;
+                height = entry.contentRect.height;
+            }
+            // Keep the size of the canvas and rubber band canvas in sync with the canvas container.
+            if (entry.devicePixelContentBoxSize) {
+                // Chrome 84 implements new version of spec.
+                canvas.setAttribute('width', entry.devicePixelContentBoxSize[0].inlineSize);
+                canvas.setAttribute('height', entry.devicePixelContentBoxSize[0].blockSize);
+            } else {
+                canvas.width = width * fig.ratio;
+                canvas.height = height * fig.ratio;
+            }
+            // This rescales the canvas back to display pixels, so that it appears correct on HiDPI screens.
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+            rubberband_canvas.setAttribute('width', width);
+            rubberband_canvas.setAttribute('height', height);
+            // And update the size in Python. We ignore the initial 0/0 size
+            // that occurs as the element is placed into the DOM, which should
+            // otherwise not happen due to the minimum size styling.
+            if (width != 0 && height != 0) {
+                mplfig.handle_resize(width, height);
+            }
+        }
+    });
+    this.resizeObserverInstance.observe(this.canvas_div);
     // Event handling
     var fig = this; // Need to define this as var for closure below to work
     function on_keyboard_event_closure(name) {
@@ -95,6 +135,13 @@ class Figure {
     // The bottom bar, with toolbar and message display
     this._toolbar_images = [];
     this.init_toolbar(this);
+    window.setTimeout(() => {
+      // For some reason, the resizeObserver and css position:absolute makes the canvas have zero height...?
+      canvas.style.width = width + 'px'; canvas.style.height = height + 'px'; 
+      this.canvas_div.style.width = width + 'px'; this.canvas_div.style.height = height + 'px'; 
+      mplfig.handle_resize(width, height);
+      mplfig.draw();
+    }, 100);
   };
 
   init_toolbar() {
@@ -154,7 +201,7 @@ class Figure {
     fmt_picker.classList = 'mpl-widget';
     toolbar.appendChild(fmt_picker);
     this.format_dropdown = fmt_picker;
-    var extensions = ["eps", "jpeg", "pdf", "pgf", "png", "ps", "raw", "svg", "tif"];
+    var extensions = this.mplfig.get_save_ext();
     var default_extension = "png";
     for (var ind in extensions) {
         var fmt = extensions[ind];

@@ -97,6 +97,17 @@ class FigureCanvasJsAgg(backend_agg.FigureCanvasAgg):
     def handle_toolbar_button(self, event):
         getattr(self.toolbar, event)()
 
+    def handle_resize(self, width=800, height=800):
+        x = int(width) * self.device_pixel_ratio
+        y = int(height) * self.device_pixel_ratio
+        # An attempt at approximating the figure size in pixels.
+        self.figure.set_size_inches(x / self.figure.dpi, y / self.figure.dpi, forward=False)
+        # Acknowledge the resize, and force the viewer to update the
+        # canvas size to the figure's new size (which is hopefully
+        # identical or within a pixel or so).
+        ResizeEvent('resize_event', self)._process()
+        self.draw_idle()
+
     def handle_save(self, filetype):
         mimetype = mimetypes.types_map.get(f".{filetype}")
         if mimetype is None:
@@ -118,6 +129,9 @@ class FigureCanvasJsAgg(backend_agg.FigureCanvasAgg):
     def get_toolbar_image(self, image):
         filename = Path(backend_agg.__file__).parent.parent / f"mpl-data/images/{image}.png"
         return to_js(filename.read_bytes())
+
+    def get_save_ext(self):
+        return to_js([ext[0] for _, ext in sorted(self.get_supported_filetypes_grouped().items())])
 
     def _create_root_element(self):
         div = document.createElement("div")
